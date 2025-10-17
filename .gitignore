@@ -1,0 +1,9 @@
+# Ignorer le dataset (sensible ou trop lourd)
+MedicalMigration/dataset/*.csv
+
+# Ignorer les fichiers temporaires
+__pycache__/
+*.pyc
+
+# Ignorer les secrets
+.env

@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: medical_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db          # Volume pour persistance MongoDB
+    restart: always
+
+  python_migration:
+    build:
+      context: ../MedicalMigration     # Chemin vers ton Dockerfile et scripts
+    container_name: migration_script
+    depends_on:
+      - mongo
+    volumes:
+      - ../MedicalMigration/dataset:/app/dataset   # Volume pour le CSV
+    environment:
+      - MONGO_HOST=mongo             # Nom du service Mongo pour Docker
+      - MONGO_PORT=27017
+      - MONGO_DB=medical_db
+      - MONGO_COLL=patients
+      - CSV_PATH=/app/dataset/healthcare_dataset.csv
+    command: ["python", "scripts/migrate_to_mongo.py"]
+
+volumes:
+  mongo_data: {}
+
