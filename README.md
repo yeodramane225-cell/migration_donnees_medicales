@@ -385,9 +385,9 @@ CSV_PATH = os.environ.get( "CSV_PATH", r"C:\Users\yeodr\Migration_donnees_medica
 ```
 
 
---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# Pour identifier l'adresse ip:
+# Identification de l'adresse ip du docker (medical_mongo)
+## Pour identifier l'adresse ip:
 ```
 cd C:\Users\yeodr\Migration_donnees_medicales
 ```
@@ -407,6 +407,9 @@ Cherche l’interface eth0.
 
 L’IP affichée est celle du conteneur.
 
+
+## l'adresse ip est ajouté au script pour favoriser la mgration, mais j'ai plutôt utilisé le nom du contenaire 
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # pour voir les logs (commande : docker logs migration_script) :PS C:\Users\yeodr\Migration_donnees_medicales\docker> docker logs migration_script
@@ -416,138 +419,238 @@ Traceback (most recent call last): File "/app/scripts/migrate_to_mongo.py", line
 
 
 # Etape 4 : conteneurisez l'application avec docker
-1️⃣ Arborescence des fichiers Migration_donnees_medicales/ │ ├─ MedicalMigration/ │ ├─ scripts/ │ │ └─ migrate_to_mongo.py │ ├─ dataset/ │ │ └─ healthcare_dataset.csv │ ├─ Dockerfile │ └─ requirements.txt │ └─ docker/ └─ docker-compose.yml
+
+
+## Arborescence des fichiers
+Migration_donnees_medicales/
+│
+├─ MedicalMigration/
+│  ├─ scripts/
+│  │  └─ migrate_to_mongo.py
+│  ├─ dataset/
+│  │  └─ healthcare_dataset.csv
+│  ├─ Dockerfile
+│  └─ requirements.txt
+│
+└─ docker/
+   └─ docker-compose.yml
+
 
 MedicalMigration/ : contient ton code Python, le CSV et le Dockerfile.
 
 docker/ : contient docker-compose.yml.
 
-2️⃣ Dockerfile (dans MedicalMigration/) : créer un fichier(Dockerfile) et copié
+## Dockerfile (dans MedicalMigration/) : créer un fichier(Dockerfile) et copié
 
+```
 FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt . RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
 CMD ["python", "scripts/migrate_to_mongo.py"]
 
+```
+
 Permet de construire l’image Python qui exécutera le script de migration.
 
-3️⃣ créer un fichier requirements.txt et coller :
 
-pandas==2.1.0 numpy==1.26.0 pymongo==4.6.1
 
-reconstruire l'image:
+## créer un fichier requirements.txt et coller :
 
+```
+pandas==2.1.0
+numpy==1.26.0
+pymongo==4.6.1
+```
+## reconstruire l'image:
+```
 docker-compose up --build
-
-# pour voir l’état final des conteneur
-
+```
+## pour voir l’état final des conteneur
+```
 docker ps -a
+```
 
-4️⃣ docker-compose.yml (dans docker/) : créer le fichier
+## docker-compose.yml (dans docker/) : créer le fichier
 
+```
 version: '3.8'
 
-services: mongo: image: mongo:latest container_name: medical_mongo ports: - "27017:27017" volumes: - mongo_data:/data/db # Volume pour persistance MongoDB restart: always
+services:
+  mongo:
+    image: mongo:latest
+    container_name: medical_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db          # Volume pour persistance MongoDB
+    restart: always
 
-python_migration: build: context: ../MedicalMigration # Chemin vers ton Dockerfile et scripts container_name: migration_script depends_on: - mongo volumes: - ../MedicalMigration/dataset:/app/dataset # Volume pour le CSV environment: - MONGO_HOST=mongo # Nom du service Mongo pour Docker - MONGO_PORT=27017 - MONGO_DB=medical_db - MONGO_COLL=patients - CSV_PATH=/app/dataset/healthcare_dataset.csv command: ["python", "scripts/migrate_to_mongo.py"]
+  python_migration:
+    build:
+      context: ../MedicalMigration     # Chemin vers ton Dockerfile et scripts
+    container_name: migration_script
+    depends_on:
+      - mongo
+    volumes:
+      - ../MedicalMigration/dataset:/app/dataset   # Volume pour le CSV
+    environment:
+      - MONGO_HOST=mongo             # Nom du service Mongo pour Docker
+      - MONGO_PORT=27017
+      - MONGO_DB=medical_db
+      - MONGO_COLL=patients
+      - CSV_PATH=/app/dataset/healthcare_dataset.csv
+    command: ["python", "scripts/migrate_to_mongo.py"]
 
-volumes: mongo_data: {}
+volumes:
+  mongo_data: {}
+
+```
 
 Le conteneur Python utilise MONGO_HOST=mongo pour se connecter au conteneur Mongo.
 
-5️⃣ Script Python (migrate_to_mongo.py)
+## Script Python (migrate_to_mongo.py)
 
 Assure-toi que dans le script, tu as :
 
-import pandas as pd from pymongo import MongoClient, errors import os import sys import logging
+```
 
-=== Configuration via variables d'environnement ===
-Détection automatique :
-- Si variable MONGO_HOST est définie (ex: Docker), utilise sa valeur
-- Sinon, utilise localhost pour MongoDB local
-MONGO_HOST = os.environ.get("MONGO_HOST", "localhost") MONGO_PORT = int(os.environ.get("MONGO_PORT", 27017)) DB_NAME = os.environ.get("MONGO_DB", "medical_db") COLLECTION_NAME = os.environ.get("MONGO_COLL", "patients")
+import pandas as pd
+from pymongo import MongoClient, errors
+import os
+import sys
+import logging
 
-CSV_PATH = os.environ.get( "CSV_PATH", r"C:\Users\yeodr\Migration_donnees_medicales\MedicalMigration\dataset\healthcare_dataset.csv" )
+# === Configuration via variables d'environnement ===
+# Détection automatique :
+# - Si variable MONGO_HOST est définie (ex: Docker), utilise sa valeur
+# - Sinon, utilise localhost pour MongoDB local
+MONGO_HOST = os.environ.get("MONGO_HOST", "localhost")
+MONGO_PORT = int(os.environ.get("MONGO_PORT", 27017))
+DB_NAME = os.environ.get("MONGO_DB", "medical_db")
+COLLECTION_NAME = os.environ.get("MONGO_COLL", "patients")
 
-=== Logging ===
+CSV_PATH = os.environ.get(
+    "CSV_PATH",
+    r"C:\Users\yeodr\Migration_donnees_medicales\MedicalMigration\dataset\healthcare_dataset.csv"
+)
+
+# === Logging ===
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-=== Lecture du CSV ===
-try: logging.info(f"Lecture du CSV : {CSV_PATH}")
-
-# Tentative lecture CSV avec détection du séparateur
+# === Lecture du CSV ===
 try:
-    df = pd.read_csv(CSV_PATH, encoding="utf-8")
-except Exception:
-    df = pd.read_csv(CSV_PATH, sep=";", encoding="utf-8")
+    logging.info(f"Lecture du CSV : {CSV_PATH}")
 
-logging.info("=== Diagnostic CSV ===")
-logging.info(f"Colonnes détectées : {list(df.columns)}")
-logging.info(f"Nombre de lignes : {len(df)}")
-logging.info("Aperçu (5 premières lignes) :\n" + df.head().to_string())
+    # Tentative lecture CSV avec détection du séparateur
+    try:
+        df = pd.read_csv(CSV_PATH, encoding="utf-8")
+    except Exception:
+        df = pd.read_csv(CSV_PATH, sep=";", encoding="utf-8")
 
-# Conversion des dates en string pour MongoDB
-for date_col in ['Date of Admission', 'Discharge Date']:
-    if date_col in df.columns:
-        df[date_col] = df[date_col].astype(str)
-except Exception as e: logging.error(f"Impossible de lire le CSV : {e}") sys.exit(1)
+    logging.info("=== Diagnostic CSV ===")
+    logging.info(f"Colonnes détectées : {list(df.columns)}")
+    logging.info(f"Nombre de lignes : {len(df)}")
+    logging.info("Aperçu (5 premières lignes) :\n" + df.head().to_string())
 
-if len(df) == 0: logging.warning("Le fichier CSV est vide. Vérifie le séparateur ou le chemin.") sys.exit(1)
+    # Conversion des dates en string pour MongoDB
+    for date_col in ['Date of Admission', 'Discharge Date']:
+        if date_col in df.columns:
+            df[date_col] = df[date_col].astype(str)
 
-=== Connexion à MongoDB ===
-try: client = MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}/", serverSelectionTimeoutMS=5000) client.admin.command('ping') # Test de connexion db = client[DB_NAME] collection = db[COLLECTION_NAME] logging.info(f"Connexion à MongoDB réussie : {DB_NAME}.{COLLECTION_NAME}") except errors.ServerSelectionTimeoutError as e: logging.error(f"Impossible de se connecter à MongoDB : {e}") sys.exit(1)
+except Exception as e:
+    logging.error(f"Impossible de lire le CSV : {e}")
+    sys.exit(1)
 
-=== Optionnel : vider la collection avant insertion ===
-try: deleted_count = collection.delete_many({}).deleted_count if deleted_count > 0: logging.info(f"Collection vidée : {deleted_count} documents supprimés.") except Exception as e: logging.error(f"Erreur lors de la purge de la collection : {e}")
+if len(df) == 0:
+    logging.warning("Le fichier CSV est vide. Vérifie le séparateur ou le chemin.")
+    sys.exit(1)
 
-=== Insertion des données ===
-try: result = collection.insert_many(df.to_dict("records")) logging.info(f"Migration terminée avec succès ! {len(result.inserted_ids)} documents insérés.")
+# === Connexion à MongoDB ===
+try:
+    client = MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}/", serverSelectionTimeoutMS=5000)
+    client.admin.command('ping')  # Test de connexion
+    db = client[DB_NAME]
+    collection = db[COLLECTION_NAME]
+    logging.info(f"Connexion à MongoDB réussie : {DB_NAME}.{COLLECTION_NAME}")
+except errors.ServerSelectionTimeoutError as e:
+    logging.error(f"Impossible de se connecter à MongoDB : {e}")
+    sys.exit(1)
 
-# Création d'index
-if 'Name' in df.columns:
-    collection.create_index('Name')
-if 'Date of Admission' in df.columns:
-    collection.create_index('Date of Admission')
-logging.info("Index créés sur 'Name' et 'Date of Admission'.")
-except Exception as e: logging.error(f"Erreur lors de l’insertion : {e}")
+# === Optionnel : vider la collection avant insertion ===
+try:
+    deleted_count = collection.delete_many({}).deleted_count
+    if deleted_count > 0:
+        logging.info(f"Collection vidée : {deleted_count} documents supprimés.")
+except Exception as e:
+    logging.error(f"Erreur lors de la purge de la collection : {e}")
 
-Comme ça, le même script fonctionne dans Docker et peut être adapté à un MongoDB local si nécessaire.
+# === Insertion des données ===
+try:
+    result = collection.insert_many(df.to_dict("records"))
+    logging.info(f"Migration terminée avec succès ! {len(result.inserted_ids)} documents insérés.")
 
-6️⃣ Lancer le tout
+    # Création d'index
+    if 'Name' in df.columns:
+        collection.create_index('Name')
+    if 'Date of Admission' in df.columns:
+        collection.create_index('Date of Admission')
+    logging.info("Index créés sur 'Name' et 'Date of Admission'.")
+except Exception as e:
+    logging.error(f"Erreur lors de l’insertion : {e}")
+
+
+```
+
+## Comme ça, le même script fonctionne dans Docker et peut être adapté à un MongoDB local si nécessaire.
+
+
+
+## Lancer le tout
 
 Depuis le dossier docker/ :
-
+```
 docker-compose up --build
+```
 
-Docker Compose va :
+## Docker Compose va :
 
-Démarrer MongoDB avec persistance (mongo_data)
+**Démarrer MongoDB avec persistance (mongo_data)**
 
-Construire l’image Python
+**Construire l’image Python**
 
-Exécuter automatiquement le script de migration
+**Exécuter automatiquement le script de migration**
 
-7️⃣ Vérification
 
-aller dans odcker desktop: ouvrir le terminal et saisir ces commandes
 
-use medical_db db.patients.countDocuments() db.patients.findOne()
+## Vérification
 
+### aller dans odcker desktop:
+ouvrir le terminal et saisir ces commandes
+```
+use medical_db
+db.patients.countDocuments()
+db.patients.findOne()
+```
 ou
 
 Ouvre un shell MongoDB :
-
+```
 docker exec -it medical_mongo mongo
+```
 
-Teste la base et la collection :
+### Teste la base et la collection :
+```
+use medical_db
+db.patients.countDocuments()
+db.patients.findOne()
+```
 
-use medical_db db.patients.countDocuments() db.patients.findOne()
 
 Tu devrais voir le nombre de documents insérés depuis le CSV.
-
 
