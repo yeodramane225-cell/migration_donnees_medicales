@@ -75,20 +75,34 @@ Migration_donnees_medicales/
 
 ```python
 import pandas as pd
-
 # Chemin du fichier CSV
 file_path = "/content/healthcare_dataset.csv"
 
 # Lire le CSV
 df = pd.read_csv(file_path)
 
-# Afficher les 100 premières lignes
-print(df.head(100))
+# Informations générales
+print("=== Informations sur le dataset ===")
+print(f"Nombre de lignes : {df.shape[0]}")
+print(f"Nombre de colonnes : {df.shape[1]}")
+print("\nColonnes et types :")
+print(df.dtypes)
 
+#Informations sur le dataset
+#Informations sur le dataset === Nombre de lignes : 55500 Nombre de colonnes : 15
 
-=== Informations sur le dataset === Nombre de lignes : 55500 Nombre de colonnes : 15
+#les colonnes : Colonnes et types : Name object Age int64 Gender object Blood Type object Medical Condition object Date of Admission object Doctor object Hospital object #Insurance Provider object Billing Amount float64 Room Number int64 Admission Type object Discharge Date object Medication object Test Results object dtype: object
 
-les colonnes : Colonnes et types : Name object Age int64 Gender object Blood Type object Medical Condition object Date of Admission object Doctor object Hospital object Insurance Provider object Billing Amount float64 Room Number int64 Admission Type object Discharge Date object Medication object Test Results object dtype: object
+# Vérifier les doublons
+num_doublons = df.duplicated().sum()
+print(f"\nNombre de doublons : {num_doublons}")
+
+#faux doublons détectés 
+
+# Vérifier les valeurs manquantes
+print("\n=== Valeurs manquantes par colonne ===")
+print(df.isnull().sum())
+
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Étape 2 : MongoDB conteneurisé
