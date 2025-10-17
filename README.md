@@ -22,7 +22,40 @@ Le déploiement repose sur deux conteneurs :
 **Python Migration** : script Python qui lit le CSV et insère les données dans MongoDB.
 
 
-## 📂 Arborescence du projet
+## Étape 0 : Préparation
+
+Prérequis :
+
+**Avoir consulté les ressources sur le NoSQL et Docker** **Cours OpenClassrooms – Optimisez votre déploiement en créant des conteneurs avec Docker**
+
+Installer sur Mon poste :
+
+**Docker Desktop + Docker Compose**
+
+**Python 3 + pip**
+
+**Git**
+
+**VS Code ou autre éditeur de code**
+
+Livrables à produire :
+
+**Script Python pour la migration.**
+
+**docker-compose.yml pour MongoDB et le script.**
+
+**README détaillé pour expliquer la migration.**
+
+**requirements.txt pour ton environnement Python.**
+
+**Présentation finale (PowerPoint ou autre).**
+
+
+## Étape 1 : Structure du projet
+
+Crée un dossier projet Migration_donnees_medicales :
+
+## Arborescence du projet
 
 ```
 Migration_donnees_medicales/
@@ -38,58 +71,20 @@ Migration_donnees_medicales/
 └─ docker/
    └─ docker-compose.yml
 ```
-Prérequis
+## Etape 2 : analyse et traitement de healthcare_dataset.csv
 
-Avant de commencer, assurez-vous d’avoir installé sur votre machine :
+```python
+import pandas as pd
 
-🐳 Docker Desktop + Docker Compose
+# Chemin du fichier CSV
+file_path = "/content/healthcare_dataset.csv"
 
-🐍 Python 3.x et pip
+# Lire le CSV
+df = pd.read_csv(file_path)
 
-💾 Git
+# Afficher les 100 premières lignes
+print(df.head(100))
 
-🧑‍💻 VS Code ou tout autre éditeur
-
-Avoir lu :
-📚 Cours OpenClassrooms – Optimisez votre déploiement en créant des conteneurs avec Docker
-
-Étape 0 : Préparation
-
-Prérequis :
-
-Avoir consulté les ressources sur le NoSQL et Docker.
-
-Installer sur Mon poste :
-
-Docker Desktop + Docker Compose
-
-Python 3 + pip
-
-Git
-
-VS Code ou autre éditeur de code
-
-Livrables à produire :
-
-Script Python pour la migration.
-
-docker-compose.yml pour MongoDB et le script.
-
-README détaillé pour expliquer la migration.
-
-requirements.txt pour ton environnement Python.
-
-Présentation finale (PowerPoint ou autre).
-
-
-Étape 1 : Structure du projet
-
-Crée un dossier projet MedicalMigration :
-
-MedicalMigration/ ├─ dataset/ # Contient le CSV : healthcare_dataset.csv ├─ scripts/ # Contient le script de migration Python ├─ docker/ # Dockerfile + docker-compose.yml ├─ docs/ # Schémas, documentation AWS └─ README.md
-
------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Import des données dans python pour analyse
 
 === Informations sur le dataset === Nombre de lignes : 55500 Nombre de colonnes : 15
 
