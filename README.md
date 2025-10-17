@@ -175,17 +175,20 @@ Crée un dossier projet Migration_donnees_medicales :
 
 ```
 Migration_donnees_medicales/
-│
 ├─ MedicalMigration/
 │  ├─ scripts/
 │  │  └─ migrate_to_mongo.py
 │  ├─ dataset/
-│  │  └─ healthcare_dataset.csv
+│  │  └─ healthcare_dataset.csv       
 │  ├─ Dockerfile
 │  └─ requirements.txt
-│
-└─ docker/
-   └─ docker-compose.yml
+├─ docker/
+│  └─ docker-compose.yml
+├─ schema/
+│  └─ mongo_schema.md                  # schéma ou exemple JSON de ta base
+├─ README.md                           # documentation principale
+└─ .gitignore                          # pour ne pas pousser le CSV et les fichiers sensibles
+
 ```
 ## Etape 2 : analyse et traitement de healthcare_dataset.csv
 
