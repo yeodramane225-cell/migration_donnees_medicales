@@ -2,6 +2,122 @@
 
 ![migration_des_donnees](https://github.com/user-attachments/assets/4caec7d1-9d12-41ef-a7f4-380f393cf52e)
 
+```
+Sommaire
+Contexte du projet
+
+Présentation du stage et de l’entreprise DataSoluTech
+
+Objectifs principaux du projet
+
+Architecture cible et technologies utilisées
+
+Livrables attendus
+
+Préparation de l’environnement
+
+Prérequis techniques
+
+Outils à installer
+
+Structure initiale du projet
+
+Arborescence détaillée des fichiers
+
+Analyse et traitement du dataset médical
+
+Chargement et exploration du fichier healthcare_dataset.csv
+
+Description des colonnes et types de données
+
+Gestion des doublons et valeurs manquantes
+
+Nettoyage et préparation des données
+
+Mise en place de MongoDB conteneurisé
+
+Création du dossier docker/ et du fichier docker-compose.yml
+
+Lancement de MongoDB avec Docker Compose
+
+Vérification du conteneur et test de connexion
+
+Identification de l’adresse IP du conteneur
+
+Développement du script de migration Python
+
+Création de l’environnement virtuel et installation des dépendances
+
+Fichier requirements.txt
+
+Développement du script migrate_to_mongo.py
+
+Test local de la migration
+
+Connexion à MongoDB et insertion des données
+
+Gestion des erreurs et création d’index
+
+Conteneurisation complète de la solution
+
+Structure finale du projet
+
+Création du Dockerfile
+
+Configuration du docker-compose.yml
+
+Construction et exécution des conteneurs
+
+Vérification et validation de la migration
+
+Visualisation des données dans MongoDB
+
+Débogage et résolution d’erreurs
+
+Erreur d’incompatibilité entre Pandas et NumPy
+
+Vérification des logs Docker
+
+Ajustement des dépendances dans requirements.txt
+
+Reconstruction des conteneurs et test final
+
+Résultats finaux
+
+Données migrées avec succès (≈ 55 500 documents insérés)
+
+Index créés dans MongoDB
+
+Conteneurs fonctionnels et persistants
+
+Architecture finale validée
+
+Documentation — Passage au cloud AWS
+
+Création d’un compte AWS
+
+Compréhension de la tarification AWS
+
+Solutions AWS compatibles MongoDB :
+
+Amazon DocumentDB
+
+MongoDB conteneurisé sur Amazon ECS
+
+Étapes de déploiement sur ECS
+
+Liens et ressources officielles AWS
+
+Étapes pratiques d’exploration via la console AWS
+
+Conclusion
+
+Bilan du projet et compétences acquises
+
+Avantages de la solution conteneurisée
+
+Perspectives d’évolution (intégration AWS, automatisation CI/CD, scalabilité)
+```
 
 ## Contexte
 
@@ -771,6 +887,7 @@ AWS propose un Free Tier pour tester certains services gratuitement pendant 12 m
 lien : https://aws.amazon.com/free/
 
 2-Comprendre la tarification AWS
+<img width="841" height="288" alt="image" src="https://github.com/user-attachments/assets/edeecf84-803c-42c3-98a1-e4f40b52ae93" />
 
 3-Services AWS pour MongoDB
 Ressource	Mode de facturation	Lien
@@ -979,4 +1096,49 @@ Liens utiles :
 •	Sécurité : IAM, VPC, CloudTrail, CloudWatch.
 •	Coût maîtrisé : tarification à l’usage et calculateur AWS.
 Cette documentation constitue la base pour un futur déploiement cloud, tout en permettant au client de comprendre les bénéfices et les services adaptés à MongoDB sur AWS.
+
+# différence entre ordinateur et server 
+Un ordinateur est une machine conçue pour un usage personnel, exécutant des applications bureautiques, multimédias ou de développement. Il gère généralement un seul utilisateur à la fois et n’est pas optimisé pour fonctionner en continu.
+
+Un serveur, en revanche, est un ordinateur spécialisé conçu pour héberger, traiter et distribuer des données ou des services à plusieurs utilisateurs ou machines simultanément via un réseau. Il dispose de matériels plus puissants, d’une haute disponibilité, d’une redondance des composants (alimentation, disques) et fonctionne 24h/24, 7j/7 pour garantir la continuité des services.
+
+
+# Conclusion
+## Bilan du projet et compétences acquises
+
+Ce projet m’a permis de consolider mes compétences en ingénierie des données à travers une mise en œuvre complète :
+
+Migration de données vers une base NoSQL (MongoDB) adaptée aux volumes massifs.
+
+Manipulation et analyse de données avec Pandas et NumPy pour assurer la qualité des imports.
+
+Mise en place d’un environnement conteneurisé via Docker pour garantir la portabilité et la reproductibilité du projet.
+
+Connexion et gestion de données dans MongoDB avec PyMongo.
+
+Sur le plan méthodologique, j’ai également acquis une meilleure compréhension du cycle de vie d’un projet Data Engineering, de la préparation du jeu de données à la préparation d’un déploiement cloud.
+
+## Avantages de la solution conteneurisée
+
+La conteneurisation de l’application présente plusieurs bénéfices :
+
+Portabilité totale : le projet peut être exécuté sur n’importe quelle machine disposant de Docker, sans problème de compatibilité.
+
+Isolation des dépendances : chaque service (MongoDB, script Python, etc.) fonctionne dans son propre environnement, évitant les conflits de versions.
+
+Déploiement rapide et reproductible : le conteneur permet de redéployer l’environnement complet en quelques secondes.
+
+Facilité de maintenance et de scalabilité : grâce à Docker Compose ou Kubernetes, il devient simple d’ajouter ou de mettre à jour des composants sans interrompre les services.
+
+## Perspectives d’évolution
+
+Plusieurs axes d’amélioration et d’évolution peuvent être envisagés pour la suite du projet :
+
+Intégration AWS : héberger MongoDB sur Amazon DocumentDB et le conteneur sur Amazon ECS pour une meilleure scalabilité et disponibilité.
+
+Automatisation CI/CD : mettre en place un pipeline de déploiement continu (GitHub Actions, Jenkins ou GitLab CI) pour automatiser les tests, le build et le déploiement.
+
+Monitoring et sauvegardes automatiques : intégrer des outils comme AWS CloudWatch ou Prometheus pour la supervision et la sauvegarde automatique des bases.
+
+Optimisation des performances : ajuster la configuration de MongoDB et de Docker pour améliorer la gestion des ressources lors de traitements massifs.
 
