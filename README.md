@@ -1,11 +1,57 @@
-# migration_donnees_medicales
+# Migration des Données Médicales vers MongoDB avec Docker
 
-Mission : Migration des données médicales vers MongoDB avec Docker
-Contexte
+![migration_des_donnees](https://github.com/user-attachments/assets/4caec7d1-9d12-41ef-a7f4-380f393cf52e)
 
-Tu es stagiaire Data Engineer chez DataSoluTech, sous la supervision de Boris. Le client a un dataset médical volumineux et rencontre des problèmes de scalabilité avec ses traitements.
 
-Objectif : Migrer les données vers MongoDB, conteneuriser l’application avec Docker, et préparer des recommandations pour un déploiement sur AWS.
+## Contexte
+
+Je suis stagiaire Data Engineer chez DataSoluTech, sous la supervision de Boris.
+Le client dispose d’un dataset médical volumineux et rencontre des problèmes de scalabilité avec ses traitements actuels.
+
+L’objectif du projet est triple :
+
+**Migrer les données issues d’un fichier CSV vers MongoDB**
+
+**Conteneuriser la solution avec Docker et Docker Compose**
+
+**Préparer la migration future vers AWS pour un déploiement cloud scalable et automatisé**
+
+Le déploiement repose sur deux conteneurs :
+
+**MongoDB** : base de données NoSQL pour stocker les informations des patients.
+**Python Migration** : script Python qui lit le CSV et insère les données dans MongoDB.
+
+
+## 📂 Arborescence du projet
+
+```
+Migration_donnees_medicales/
+│
+├─ MedicalMigration/
+│  ├─ scripts/
+│  │  └─ migrate_to_mongo.py
+│  ├─ dataset/
+│  │  └─ healthcare_dataset.csv
+│  ├─ Dockerfile
+│  └─ requirements.txt
+│
+└─ docker/
+   └─ docker-compose.yml
+```
+Prérequis
+
+Avant de commencer, assurez-vous d’avoir installé sur votre machine :
+
+🐳 Docker Desktop + Docker Compose
+
+🐍 Python 3.x et pip
+
+💾 Git
+
+🧑‍💻 VS Code ou tout autre éditeur
+
+Avoir lu :
+📚 Cours OpenClassrooms – Optimisez votre déploiement en créant des conteneurs avec Docker
 
 Étape 0 : Préparation
 
