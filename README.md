@@ -660,6 +660,323 @@ db.patients.countDocuments()
 db.patients.findOne()
 ```
 
-
 Tu devrais voir le nombre de documents insérés depuis le CSV.
+
+
+# Résumé des actions réalisées
+
+Mise en place du projet de migration des données médicales sous la supervision de Boris, dans le cadre d’un stage Data Engineer chez DataSoluTech.
+Objectif : migrer un dataset médical volumineux vers MongoDB, conteneuriser la solution avec Docker, et préparer un futur déploiement sur AWS.
+
+## Analyse et traitement du dataset healthcare_dataset.csv :
+
+**Lecture et exploration avec Pandas.**
+
+**Vérification du nombre de lignes (55 500) et colonnes (15).**
+
+**Contrôle des doublons et des valeurs manquantes.**
+
+Création de l’arborescence du projet :
+```
+Migration_donnees_medicales/
+├─ MedicalMigration/
+│  ├─ scripts/migrate_to_mongo.py
+│  ├─ dataset/healthcare_dataset.csv
+│  ├─ Dockerfile
+│  └─ requirements.txt
+└─ docker/docker-compose.yml
+```
+
+## Mise en place et test de MongoDB avec Docker Compose :
+
+**Création du fichier docker-compose.yml.**
+
+**Lancement du conteneur MongoDB (medical_mongo) avec persistance des données.**
+
+**Vérification du bon fonctionnement via docker ps et mongosh.**
+
+## Développement du script Python de migration (migrate_to_mongo.py) :
+
+**Lecture du CSV avec Pandas.**
+
+**Connexion à MongoDB avec PyMongo.**
+
+**Conversion des dates et insertion des 55 500 enregistrements dans la collection patients.**
+
+**Ajout d’index sur Name et Date of Admission.**
+
+## Création du fichier requirements.txt :
+```
+pandas==2.1.0
+numpy==1.26.0
+pymongo==4.6.1
+
+```
+
+# Liste des dépendances nécessaires à l’exécution du projet.
+
+## Création du Dockerfile pour le conteneur Python :
+
+**Installation des dépendances.**
+
+**Exécution automatique du script de migration à la construction du conteneur.**
+
+## Exécution et validation de la migration complète :
+
+**Commande : docker-compose up --build**
+
+**Résultat : 55 500 documents insérés dans medical_db.patients.**
+
+## Vérification :
+```
+docker exec -it medical_mongo mongosh
+use medical_db
+db.patients.countDocuments()
+```
+
+## Gestion des erreurs rencontrées et corrections :
+
+**Problème d’incompatibilité entre Pandas et NumPy corrigé avec les versions exactes.**
+
+**Adaptation du script pour fonctionner à la fois en local et dans Docker grâce aux variables d’environnement.**
+
+# Résultat final :
+
+**Solution fonctionnelle, portable et reproductible.**
+
+**Base MongoDB peuplée à partir du CSV.**
+
+**Conteneurisation complète prête pour un déploiement futur sur AWS.**
+
+
+
+# Documentation — Passage au cloud AWS pour MongoDB
+Objectif
+Se familiariser avec le passage au cloud et les services AWS pour la gestion d’une base de données MongoDB.
+Important : cette étape est uniquement documentaire et ne nécessite pas de déploiement réel.
+
+1-Création d’un compte AWS
+Pour utiliser AWS, il faut d’abord un compte. Voici comment procéder :
+1.	Aller sur le site officiel AWS :
+lien : https://aws.amazon.com/
+2.	Cliquer sur “Create an AWS Account”.
+3.	Saisir les informations demandées :
+o	Adresse e-mail
+o	Mot de passe
+o	Nom du compte
+4.	Fournir vos informations de facturation (carte bancaire, coordonnées).
+5.	Vérifier votre identité via SMS ou appel téléphonique.
+6.	Accéder à la console AWS, depuis laquelle tous les services sont gérés.
+AWS propose un Free Tier pour tester certains services gratuitement pendant 12 mois :
+lien : https://aws.amazon.com/free/
+
+2-Comprendre la tarification AWS
+
+3-Services AWS pour MongoDB
+Ressource	Mode de facturation	Lien
+Instances compute (EC2, RDS)	par heure ou seconde selon le type	AWS Pricing
+
+Stockage (S3, EBS, DocumentDB)	par Go / mois	AWS Pricing
+
+I/O	certaines bases facturent les opérations de lecture/écriture	DocumentDB Pricing
+
+Sauvegardes / snapshots	stockage supplémentaire	DocumentDB Backup
+
+Transfert de données	vers Internet ou entre régions	AWS Data Transfer
+
+a) Amazon DocumentDB (compatible MongoDB)
+•	Service managé, compatible avec les pilotes MongoDB.
+•	Automatiquement hautement disponible et sécurisé.
+•	Sauvegardes automatiques quotidiennes vers S3, gestion de snapshots.
+•	Réplication multi-AZ pour durabilité et haute disponibilité.
+•	Coût basé sur instances, stockage, I/O, et sauvegardes.
+Liens officiels :
+•	Présentation : https://aws.amazon.com/documentdb/
+•	Documentation : https://docs.aws.amazon.com/documentdb/latest/developerguide/what-is.html
+•	Tarification : https://aws.amazon.com/documentdb/pricing/
+Remarque : Amazon RDS ne propose pas MongoDB natif. DocumentDB est la solution recommandée pour un service managé MongoDB sur AWS.
+
+b) Déploiement de MongoDB conteneurisé sur Amazon ECS
+Amazon ECS (Elastic Container Service) permet d’exécuter des conteneurs Docker dans le cloud AWS.
+Étapes principales :
+1.	Préparer le conteneur Docker :
+o	Dockerfile avec votre script Python + dataset + dépendances (pandas, pymongo).
+o	Tester localement avant déploiement.
+2.	Créer un cluster ECS via la console AWS :
+o	Choisir le type de lancement (EC2 ou Fargate).
+o	Créer des tâches ECS (Task Definitions) : spécifier image Docker, ressources CPU/mémoire, volumes, variables d’environnement (ex : MONGO_HOST, MONGO_DB, CSV_PATH).
+3.	Configurer les services ECS pour déployer la tâche dans le cluster :
+o	Définir nombre de conteneurs à lancer.
+o	Lier au VPC et aux sous-réseaux pour connectivité.
+4.	Volumes et stockage :
+o	Si MongoDB est dans un conteneur, attacher un volume EBS pour persistance des données.
+5.	Logs et monitoring :
+o	Configurer CloudWatch Logs pour récupérer les logs des conteneurs.
+o	Définir alarmes CloudWatch pour CPU, mémoire, erreurs.
+Liens officiels :
+•	Guide ECS : https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html
+•	Exemple MongoDB ECS : https://aws.amazon.com/blogs/database/deploy-a-containerized-application-with-amazon-ecs-and-connect-to-amazon-documentdb-securely/
+•	Logs CloudWatch : https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html
+Pratique : 
+>Aller sur sur aws console login : https://aws.amazon.com/fr/console/
+ <img width="809" height="292" alt="image" src="https://github.com/user-attachments/assets/233159f5-861a-4ded-9fb2-51b2d0146f8d" />
+
+>Se connecter à son compte 
+ <img width="821" height="299" alt="image" src="https://github.com/user-attachments/assets/b979576c-7c01-4eb3-920d-361057d35841" />
+
+
+>>chercher dans la barre de recherche ecs 
+ <img width="866" height="333" alt="image" src="https://github.com/user-attachments/assets/0dc48b26-cf93-4255-a9d3-a6fbd5857d36" />
+<img width="945" height="399" alt="image" src="https://github.com/user-attachments/assets/c7699853-750f-4f41-a79a-16a553785e2e" />
+
+>>cliquer sur cluster 
+ <img width="945" height="415" alt="image" src="https://github.com/user-attachments/assets/321698d6-9d88-4e1d-bce4-8d1673670764" />
+
+>>cliquer sur create cluster >>choisisser networking only>>cliquer sur next
+ <img width="945" height="446" alt="image" src="https://github.com/user-attachments/assets/67acd4bd-3588-4860-bbf8-c04e1836e2c7" />
+
+>>renseigner le nom du cluster>>cliquer sur created 
+ 
+ <img width="945" height="441" alt="image" src="https://github.com/user-attachments/assets/3f26d2b8-8855-4224-938a-87b7dca9466e" />
+<img width="945" height="359" alt="image" src="https://github.com/user-attachments/assets/f7a8e2b7-6cca-487e-9983-c0f53ebd47cf" />
+
+>>cliquez sur view cluster 
+ <img width="945" height="421" alt="image" src="https://github.com/user-attachments/assets/e7b2a5ec-7dda-4b35-8e19-dc408933e04c" />
+
+>>aller dans task
+ <img width="945" height="398" alt="image" src="https://github.com/user-attachments/assets/e3bcf0e4-4ba7-4a62-8de2-0faa19e4c65b" />
+
+>>le cluster est ok mais n’a pas de task>> on aller voir l’image de mongodb qu’on souhaite déployer >>allez sur docker hub 
+ <img width="750" height="371" alt="image" src="https://github.com/user-attachments/assets/07a3fd0b-309e-46bd-8059-4f68dab1c00b" />
+
+>>choisir l’image officielle 
+ <img width="945" height="250" alt="image" src="https://github.com/user-attachments/assets/d3f3fc4c-ecad-41b6-9e9d-b6592e074934" />
+<img width="564" height="445" alt="image" src="https://github.com/user-attachments/assets/75739b3a-3b73-439a-bf47-1b430e2d2e8a" />
+
+ 
+>>Dans tag 
+ <img width="945" height="176" alt="image" src="https://github.com/user-attachments/assets/200c34e8-6683-49cd-abca-fbfc2ae91858" />
+
+>>cliquer sur jammy (c’est l’image)
+<img width="772" height="300" alt="image" src="https://github.com/user-attachments/assets/624c4a1b-1621-4813-b3fc-aa39b05e586b" />
+ 
+>>on reviens dans la console aws pour créer task definition 
+ <img width="766" height="563" alt="image" src="https://github.com/user-attachments/assets/d5f2ff96-e152-433d-abb0-8a5060574b84" />
+
+>>Cliquez sur task definition 
+ <img width="851" height="387" alt="image" src="https://github.com/user-attachments/assets/9e27e9fe-661a-4038-9762-6b92d284f062" />
+
+>>sélectionner farget 
+ <img width="804" height="389" alt="image" src="https://github.com/user-attachments/assets/11d4869e-47b6-4872-a70f-dadbd4a08999" />
+
+>>renseigner que le nom, la taille et le cpu
+ <img width="755" height="370" alt="image" src="https://github.com/user-attachments/assets/e5cc2adf-3d91-47ae-af63-f137f9898e4b" />
+<img width="945" height="356" alt="image" src="https://github.com/user-attachments/assets/d060ef78-4418-4e36-8954-c42f13cc1c2c" />
+
+ 
+>>cliquer sur add contenair >>renseigner le nom 
+ <img width="805" height="393" alt="image" src="https://github.com/user-attachments/assets/09fd18ef-3fbd-4236-b016-1d518b104e7a" />
+
+>>pour l’image aller sur docker hub, l’image qui avait été identifier puis faire copier-coller 
+ <img width="945" height="164" alt="image" src="https://github.com/user-attachments/assets/e9c4bb3a-35bb-4085-9d97-5850afc28275" />
+
+>>coller ici 
+ <img width="945" height="619" alt="image" src="https://github.com/user-attachments/assets/8276d73f-012c-4c55-8ac1-3b0fb209d62b" />
+<img width="945" height="448" alt="image" src="https://github.com/user-attachments/assets/a62edc8f-adbb-4290-a812-3030a5da2898" />
+
+
+ 
+>>le reste des cage, laisser vide et cliquer sur add contenair 
+ <img width="945" height="243" alt="image" src="https://github.com/user-attachments/assets/0c862f0a-9e39-4917-bab1-0e694123a499" />
+
+>>au bas de la page>> cliquer sur create 
+ <img width="945" height="464" alt="image" src="https://github.com/user-attachments/assets/da51e10c-202e-4f71-b38a-292c9d061d93" />
+
+ <img width="945" height="395" alt="image" src="https://github.com/user-attachments/assets/a0bbf155-ffb5-4f79-a92e-c7a16aa370f9" />
+
+>>cliquer sur view task definition 
+ 
+<img width="945" height="452" alt="image" src="https://github.com/user-attachments/assets/75386474-87ab-43ac-9167-dc3e78287196" />
+<img width="945" height="465" alt="image" src="https://github.com/user-attachments/assets/4a6655f3-188b-461f-801f-980df1d3f264" />
+
+
+>>choisez farget 
+ <img width="945" height="307" alt="image" src="https://github.com/user-attachments/assets/01ddf238-7b74-4f6e-88b3-9750caae974c" />
+
+>>choisissez linux 
+ <img width="945" height="391" alt="image" src="https://github.com/user-attachments/assets/936f2432-fbc4-440d-b545-e3fb3c07c0d6" />
+
+>>choisissez les valeurs par défaut 
+ <img width="945" height="215" alt="image" src="https://github.com/user-attachments/assets/60a5e1a7-fa0d-4e70-b3f8-b9e45363fda4" />
+
+>>cliquez sur édite au niveau de Security group
+ <img width="945" height="287" alt="image" src="https://github.com/user-attachments/assets/fdd39edc-5264-40dd-9cc0-80e0da52cf1b" />
+
+>>cliquez sur add rule pour ajouter des roles 
+ <img width="945" height="545" alt="image" src="https://github.com/user-attachments/assets/a5f42342-c0de-4174-aa42-5e7e499bbe0f" />
+
+>>dans type choisissez custom TCP et cliquez sur sauve
+ <img width="945" height="241" alt="image" src="https://github.com/user-attachments/assets/c3693620-a043-4529-9381-ec1bf7a07f4f" />
+
+>> cliquez sur run task 
+ <img width="798" height="288" alt="image" src="https://github.com/user-attachments/assets/d1c6f44f-6d00-4c86-8cac-f6db65b73a22" />
+
+>>rafraichissez 
+<img width="791" height="394" alt="image" src="https://github.com/user-attachments/assets/2542270e-20da-4f4a-b6ab-74319d903167" />
+ 
+>>cliquez sur task (id)
+ <img width="945" height="37" alt="image" src="https://github.com/user-attachments/assets/0c2899dc-4209-420b-8bf1-43cb267e6f8d" />
+
+>>on peut voir qu’il est en runing, on peut consulter les logs 
+ <img width="729" height="452" alt="image" src="https://github.com/user-attachments/assets/84430b29-3204-4b0d-8e5c-68fec28794db" />
+<img width="945" height="485" alt="image" src="https://github.com/user-attachments/assets/0525e844-52c0-435a-a747-5168a4700e6d" />
+
+ 
+>>on va utiliser l’adresse ip public 
+>>ouvrir mongodb compas>>créer une nouvelle connection et ajouté l’adresse ip public>> cliquez sur connect 
+ <img width="945" height="487" alt="image" src="https://github.com/user-attachments/assets/fe49beb2-8104-4cd7-98e4-3aa6f1aa8428" />
+
+>>connection avec succès et mongodb fonction depuis le contenair>>vous pouvez créer une base de donnée créer des collections et ajouter les donnée
+<img width="945" height="410" alt="image" src="https://github.com/user-attachments/assets/80a41f1e-3c96-4c6b-91cf-b6d53552c6d4" />
+
+ 
+>>aller ensuite dans aws>>consulter les logs
+ <img width="841" height="425" alt="image" src="https://github.com/user-attachments/assets/9606c181-c773-421f-ab6d-7756aae5bbdb" />
+<img width="846" height="442" alt="image" src="https://github.com/user-attachments/assets/4ebe38b4-c61a-48cf-8fd3-74b9e4819b0b" />
+
+ <img width="871" height="434" alt="image" src="https://github.com/user-attachments/assets/7a33f281-f5d8-48a7-ad3e-44d87027231b" />
+<img width="945" height="453" alt="image" src="https://github.com/user-attachments/assets/6635a5ff-96ce-4547-bbba-f219ce3e6b8e" />
+
+
+Lien video déploiement de mongodb dans un cluster sur aws :
+https://www.youtube.com/watch?v=7QmbmHsz0x8&t=1505s
+
+
+4-Sauvegardes et surveillance des bases de données
+Sauvegardes
+•	DocumentDB : sauvegardes automatiques sur S3, possibilité de snapshots manuels.
+•	MongoDB dans ECS/EC2 :
+o	mongodump / mongorestore pour backup/restore.
+o	Stockage des backups sur S3.
+o	Automatisation possible avec cron, Lambda, ECS scheduled tasks.
+Liens utiles :
+•	Backup DocumentDB : https://docs.aws.amazon.com/documentdb/latest/developerguide/what-is.html
+•	Backup MongoDB vers S3 : https://bansalnagesh.medium.com/backing-up-mongodb-on-aws-ec2-to-s3-b045b5727fd6
+Surveillance (Monitoring)
+•	Utiliser CloudWatch pour :
+o	CPU, mémoire, I/O, connexions, latence.
+o	Définir des alertes sur seuils critiques.
+•	CloudTrail pour audit et logs API.
+•	IAM pour gérer les permissions et sécuriser l’accès aux bases.
+Liens utiles :
+•	CloudWatch : https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html
+•	CloudTrail : https://aws.amazon.com/cloudtrail/
+
+5-Résumé et utilité pour le client
+•	Scalabilité : AWS permet d’adapter facilement les ressources (compute, stockage).
+•	Haute disponibilité : Multi-AZ, réplication, snapshots automatiques.
+•	Maintenance réduite : services managés comme DocumentDB ou ECS pour MongoDB.
+•	Sécurité : IAM, VPC, CloudTrail, CloudWatch.
+•	Coût maîtrisé : tarification à l’usage et calculateur AWS.
+Cette documentation constitue la base pour un futur déploiement cloud, tout en permettant au client de comprendre les bénéfices et les services adaptés à MongoDB sur AWS.
 
