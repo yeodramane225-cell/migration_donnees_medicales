@@ -470,6 +470,12 @@ pandas==2.1.0
 numpy==1.26.0
 pymongo==4.6.1
 ```
+
+### le fichier requirements.txt sert à décrire tous les modules Python nécessaires pour faire fonctionner ton projet 
+— c’est une liste des dépendances de ton environnement. pour le lancer :
+```
+pip install -r requirements.txt
+```
 ## reconstruire l'image:
 ```
 docker-compose up --build
