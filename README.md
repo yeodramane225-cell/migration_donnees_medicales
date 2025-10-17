@@ -101,8 +101,103 @@ print(f"\nNombre de doublons : {num_doublons}")
 
 # Vérifier les valeurs manquantes
 print("\n=== Valeurs manquantes par colonne ===")
-print(df.isnull().sum())
+print(df.isnull().sum()) 
 
+```
+
+## Étape 3 : MongoDB conteneurisé
+### Créer l’arborescence du projet
+
+Dans ton projet, crée un dossier docker :
+
+```
+mkdir docker cd docker
+```
+
+Puis, crée le fichier docker-compose.yml :
+
+Utiliser le Bloc-notes
+
+--Dans PowerShell :
+```
+notepad docker-compose.yml
+```
+
+Si le fichier n’existe pas, il demandera de le créer.
+
+Coller ensuite ton contenu YAML et enregistre.
+
+--Utiliser Visual Studio Code (si installé)
+
+Si tu as VS Code :
+
+```
+code docker-compose.yml
+```
+
+Cela ouvrira le fichier dans VS Code.
+
+Tu peux le modifier et sauvegarder directement.
+
+--dans linux nano docker-compose.yml
+
+Copie-colle le contenu suivant :
+
+```
+version: '3.8'
+
+services: mongo: image: mongo:latest container_name: medical_mongo ports: - "27017:27017" volumes: - mongo_data:/data/db
+
+volumes: mongo_data:
+
+```
+
+Enregistre et ferme le fichier.
+
+## Lancer MongoDB avec Docker Compose
+
+s'assurer qu'on est dans le dossier docker où se trouve docker-compose.yml puis exécute :
+
+```
+docker-compose up -d
+```
+
+L’option -d lance le conteneur en arrière-plan (détaché).
+
+Docker va télécharger l’image officielle mongo:latest si elle n’existe pas encore.
+
+## Vérifier que le conteneur tourne
+
+Pour voir les conteneurs en cours d’exécution :
+```
+docker ps
+```
+
+Tu devrais voir quelque chose comme :
+
+CONTAINER ID IMAGE COMMAND STATUS PORTS NAMES abcd1234 mongo:latest "docker-entrypoint.s…" Up 10s 0.0.0.0:27017->27017/tcp medical_mongo
+
+STATUS: Up → MongoDB fonctionne.
+
+PORTS: 27017 → tu peux te connecter à MongoDB depuis ton script Python ou Mongo Shell sur ce port.
+
+## Tester la connexion à MongoDB (optionnel)
+
+--on peut aller dans le shell de mongodb depuis le contenaire et fait : mongosh
+
+on verra normalement mongodb se connecter (base test apparait)
+
+--on peut aussi depuis vscode : aller dans le dossier (exemeple cd : C:\Users\yeodr\Migration_donnees_medicales\docker) et fait : docker exec -it medical_mongo mongosh
+
+--Si tu as installé pymongo en Python :
+```
+from pymongo import MongoClient
+
+client = MongoClient("mongodb://localhost:27017/") db = client.test_db print(db.list_collection_names())
+
+```
+
+Tu devrais voir une liste vide pour l’instant, car aucune collection n’est encore créée.
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Étape 2 : MongoDB conteneurisé
