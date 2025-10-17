@@ -422,6 +422,7 @@ Traceback (most recent call last): File "/app/scripts/migrate_to_mongo.py", line
 
 
 ## Arborescence des fichiers
+```
 Migration_donnees_medicales/
 │
 ├─ MedicalMigration/
@@ -434,6 +435,8 @@ Migration_donnees_medicales/
 │
 └─ docker/
    └─ docker-compose.yml
+
+```
 
 
 MedicalMigration/ : contient ton code Python, le CSV et le Dockerfile.
