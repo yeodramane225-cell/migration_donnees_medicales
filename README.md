@@ -1165,3 +1165,4 @@ Monitoring et sauvegardes automatiques : intégrer des outils comme AWS CloudWat
 
 Optimisation des performances : ajuster la configuration de MongoDB et de Docker pour améliorer la gestion des ressources lors de traitements massifs.
 
+      
