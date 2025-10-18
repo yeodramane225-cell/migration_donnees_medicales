@@ -175,19 +175,27 @@ Crée un dossier projet Migration_donnees_medicales :
 
 ```
 Migration_donnees_medicales/
+│
 ├─ MedicalMigration/
 │  ├─ scripts/
-│  │  └─ migrate_to_mongo.py
+│  │  └─ migrate_to_mongo.py          # script principal de migration (CRUD complet)
 │  ├─ dataset/
-│  │  └─ healthcare_dataset.csv       
-│  ├─ Dockerfile
-│  └─ requirements.txt
+│  │  └─ healthcare_dataset.csv       # dataset médical source
+│  ├─ requirements.txt                # dépendances Python
+│
 ├─ docker/
-│  └─ docker-compose.yml
+│  ├─ Dockerfile                      # image de l’application Python
+│  └─ docker-compose.yml              # orchestration MongoDB + app
+│
 ├─ schema/
-│  └─ mongo_schema.md                  # schéma ou exemple JSON de ta base
-├─ README.md                           # documentation principale
-└─ .gitignore                          # pour ne pas pousser le CSV et les fichiers sensibles
+│  └─ mongo_schema.md                 # structure de la base MongoDB ou exemple JSON
+│
+├─ tests/
+│  └─ test_migration.py               # tests unitaires pour le script de migration
+│
+├─ README.md                          # documentation principale du projet
+└─ .gitignore                         # fichiers à ne pas pousser sur GitHub
+
 
 ```
 ## Etape 2 : analyse et traitement de healthcare_dataset.csv
@@ -546,14 +554,24 @@ Migration_donnees_medicales/
 │
 ├─ MedicalMigration/
 │  ├─ scripts/
-│  │  └─ migrate_to_mongo.py
+│  │  └─ migrate_to_mongo.py          # script principal de migration (CRUD complet)
 │  ├─ dataset/
-│  │  └─ healthcare_dataset.csv
-│  ├─ Dockerfile
-│  └─ requirements.txt
+│  │  └─ healthcare_dataset.csv       # dataset médical source
+│  ├─ requirements.txt                # dépendances Python
 │
-└─ docker/
-   └─ docker-compose.yml
+├─ docker/
+│  ├─ Dockerfile                      # image de l’application Python
+│  └─ docker-compose.yml              # orchestration MongoDB + app
+│
+├─ schema/
+│  └─ mongo_schema.md                 # structure de la base MongoDB ou exemple JSON
+│
+├─ tests/
+│  └─ test_migration.py               # tests unitaires pour le script de migration
+│
+├─ README.md                          # documentation principale du projet
+└─ .gitignore                         # fichiers à ne pas pousser sur GitHub
+
 
 ```
 
