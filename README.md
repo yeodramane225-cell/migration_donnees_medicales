@@ -188,13 +188,14 @@ Migration_donnees_medicales/
 │  └─ docker-compose.yml              # orchestration MongoDB + app
 │
 ├─ schema/
-│  └─ mongo_schema.md                 # structure de la base MongoDB ou exemple JSON
+│  └─ medical_db.patients.json        # schéma JSON de la base MongoDB
 │
 ├─ tests/
 │  └─ test_migration.py               # tests unitaires pour le script de migration
 │
 ├─ README.md                          # documentation principale du projet
-└─ .gitignore                         # fichiers à ne pas pousser sur GitHub
+└─ .gitignore                         # fichiers à ne pas pousser sur GitHub (ex: CSV, logs)
+
 
 
 ```
@@ -564,13 +565,14 @@ Migration_donnees_medicales/
 │  └─ docker-compose.yml              # orchestration MongoDB + app
 │
 ├─ schema/
-│  └─ mongo_schema.md                 # structure de la base MongoDB ou exemple JSON
+│  └─ medical_db.patients.json        # schéma JSON de la base MongoDB
 │
 ├─ tests/
 │  └─ test_migration.py               # tests unitaires pour le script de migration
 │
 ├─ README.md                          # documentation principale du projet
-└─ .gitignore                         # fichiers à ne pas pousser sur GitHub
+└─ .gitignore                         # fichiers à ne pas pousser sur GitHub (ex: CSV, logs)
+
 
 
 ```
