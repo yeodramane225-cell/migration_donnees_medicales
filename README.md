@@ -1511,7 +1511,7 @@ docker-compose up --build
 
 ## Vérification
 
-### aller dans odcker desktop:
+### aller dans dockerr desktop:
 ouvrir le terminal et saisir ces commandes
 ```
 use medical_db
