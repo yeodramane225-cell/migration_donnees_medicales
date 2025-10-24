@@ -142,6 +142,50 @@ Le déploiement repose sur deux conteneurs :
 ## Étape 0 : création de branche pour la bonne gestion du projet dans git(github)
 
 ## Création des autres branches, script et test (prioriser de travailler sur les autres branche avant de fusionner les modifications ou le travail sur la branche principale(main) (dans mon cas les autres branches ont été crées après et les modifications reportées sur la branche main(maître), mais le projet avait été deployé sur la branche main)
+\033[32m
+```
+                             ┌──────────────────────────────────┐
+                             │         MAIN (branche stable)    │
+                             │----------------------------------│
+                             │Contient la version validée du    │
+                             │projet après fusion CI/CD.        │
+                             │Déploie la migration complète.    │
+                             └───────────────┬──────────────────┘
+                                             │
+           ┌────────────────────────────────┴────────────────────────────────┐
+           │                                                                 │
+┌──────────────────────────────────┐                         ┌──────────────────────────────────┐
+│ feature/tests-unitaires          │                         │ feature/authentification         │
+│----------------------------------│                         │----------------------------------│
+│    Objectif :                    │                         │    Objectif :                    │
+│ Tester le script de migration et │                         │ Créer les utilisateurs MongoDB   │
+│ la structure de la base Mongo.   │                         │ (admin, migration, read-only).   │
+│----------------------------------│                         │----------------------------------│
+│    Contient : test_migration.py  │                         │    Contient : auth_mongo.py      │
+│----------------------------------│                         │----------------------------------│
+│    Commandes clés :              │                         │    Commandes clés :              │
+│  - python -m unittest discover   │                         │  - python auth/auth_mongo.py     │
+│  - git push origin feature/...   │                         │  - mongosh pour vérifier users   │
+└──────────────────────────────────┘                         └──────────────────────────────────┘
+           │                                                                 │
+           ├────────────────────────────────┬────────────────────────────────┤
+           │                                │                                │
+┌──────────────────────────────────┐  ┌──────────────────────────────────┐
+│ feature/analyse-donnees          │  │ feature/configuration-docker     │
+│----------------------------------│  │----------------------------------│
+│ Objectif :                    │  │       Objectif :                    │
+│ Nettoyer et analyser les données │  │ Conteneuriser le projet avec     │
+│ avant migration vers MongoDB.    │  │ MongoDB et Python.               │
+│----------------------------------│  │----------------------------------│
+│ Contient : data_cleaning.py   │  │      Contient : Dockerfile +        │
+│                                  │  │              docker-compose.yml  │
+│----------------------------------│  │----------------------------------│
+│    Commandes clés :              │  │    Commandes clés :              │
+│  - python scripts/data_cleaning  │  │  - docker-compose up --build     │
+│  - git push origin feature/...   │  │  - test conteneur Mongo actif    │
+└──────────────────────────────────┘  └──────────────────────────────────┘
+\033[0m
+```
  branche principal(maître) :main : branche existant 
 feature/tests-unitaires
 
