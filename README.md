@@ -691,8 +691,8 @@ notepad .\MedicalMigration\scripts\migrate_to_mongo.py
 │ Auth DB : medical_db ou      │                         │ Auth DB : medical_db ou     │
 │           MedicalMigration   │                         │           MedicalMigration  │
 │ Connexion :                  │                         │ Connexion :                 │
-│ mongosh -u migration_user -p password │                 │ mongosh -u read_user -p password │
-│   --authenticationDatabase medical_db │                 │   --authenticationDatabase medical_db │
+│ mongosh -u migration_user -p password │                │ mongosh -u read_user -p password │
+│   --authenticationDatabase medical_db │                │   --authenticationDatabase medical_db │
 │ Peut : insert / update / delete │                      │ Peut : uniquement find()    │
 │ Ne peut pas : créer d’utilisateurs │                   │ Ne peut pas : écrire        │
 └──────────────────────────────┘                         └─────────────────────────────┘
