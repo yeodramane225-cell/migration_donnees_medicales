@@ -138,7 +138,21 @@ Le déploiement repose sur deux conteneurs :
 **Python Migration** : script Python qui lit le CSV et insère les données dans MongoDB.
 
 
-## Étape 0 : Préparation
+
+## Étape 0 : création de branche pour la bonne gestion du projet dans git(github)
+
+## Création des autres branches, script et test (prioriser de travailler sur les autres branche avant de fusionner les modifications ou le travail sur la branche principale(main) (dans mon cas les autres branches ont été crées après et les modifications reportées sur la branche main(maître), mais le projet avait été deployé sur la branche main)
+ branche principal(maître) :main : branche existant 
+feature/tests-unitaires
+
+feature/authentification
+
+feature/analyse-donnees
+
+feature/configuration-docker
+
+
+## Étape 1 : Préparation
 
 Prérequis :
 
@@ -167,7 +181,7 @@ Livrables à produire :
 **Présentation finale (PowerPoint ou autre).**
 
 
-## Étape 1 : Structure du projet
+## Étape 2 : Structure du projet
 
 Crée un dossier projet Migration_donnees_medicales :
 
@@ -178,62 +192,278 @@ Migration_donnees_medicales/
 │
 ├─ MedicalMigration/
 │  ├─ scripts/
-│  │  └─ migrate_to_mongo.py          # script principal de migration (CRUD complet)
+│  │  ├─ migrate_to_mongo.py        # script principal de migration (CRUD complet)
+│  │  ├─ data_cleaning.py           # pré-traitement du dataset
+│  │  ├─ mongo_migration.py         # fonctions MongoDB supplémentaires (si nécessaire)
+│  │  └─ __pycache__/               # fichiers compilés Python
+│  │
+│  ├─ auth/
+│  │  └─ auth_mongo.py              # gestion des utilisateurs MongoDB
+│  │
 │  ├─ dataset/
-│  │  └─ healthcare_dataset.csv       # dataset médical source
-│  ├─ requirements.txt                # dépendances Python
+│  │  └─ healthcare_dataset.csv     # dataset médical source
+│  │
+│  ├─ __init__.py                   # rendre MedicalMigration un package Python
+│  ├─ requirements.txt              # dépendances Python
+│  └─ .github/
+│     └─ workflows/
+│        └─ ci_cd.yml               # pipeline CI/CD GitHub Actions
 │
 ├─ docker/
-│  ├─ Dockerfile                      # image de l’application Python
-│  └─ docker-compose.yml              # orchestration MongoDB + app
+│  ├─ Dockerfile                     # image Python + MongoDB client
+│  └─ docker-compose.yml             # orchestration MongoDB + app
 │
 ├─ schema/
-│  └─ medical_db.patients.json        # schéma JSON de la base MongoDB
+│  └─ medical_db.patients.json       # schéma JSON de la base MongoDB
 │
 ├─ tests/
-│  └─ test_migration.py               # tests unitaires pour le script de migration
+│  ├─ test_migration.py              # tests unitaires pour migrate_to_mongo.py
+│  └─ __pycache__/                   # fichiers compilés Python
 │
+├─ .env                              # variables d’environnement (MongoDB URI, credentials)
 ├─ README.md                          # documentation principale du projet
-└─ .gitignore                         # fichiers à ne pas pousser sur GitHub (ex: CSV, logs)
+└─ .gitignore                         # fichiers à ne pas pousser (logs, CSV, venv, etc.)
 
 
 
 ```
-## Etape 2 : analyse et traitement de healthcare_dataset.csv
-
-```python
+## Etape 3 : analyse et traitement de healthcare_dataset.csv
+## création de script python d'analyse (le script donne le nombre d'enregistrement ou document, le nom des colonnes, les variables,les doublons ...) 
+## script : data_cleaning.py
+```
 import pandas as pd
-# Chemin du fichier CSV
-file_path = "/content/healthcare_dataset.csv"
+import logging
+import os
 
-# Lire le CSV
-df = pd.read_csv(file_path)
+logging.basicConfig(level=logging.INFO)
 
-# Informations générales
-print("=== Informations sur le dataset ===")
-print(f"Nombre de lignes : {df.shape[0]}")
-print(f"Nombre de colonnes : {df.shape[1]}")
-print("\nColonnes et types :")
-print(df.dtypes)
+def analyze_dataset(file_path):
+    # Lecture du CSV
+    df = pd.read_csv(file_path)
+    
+    # Nombre de lignes et colonnes
+    total_rows = len(df)
+    total_columns = len(df.columns)
+    column_names = list(df.columns)
+    
+    # Nombre de doublons
+    duplicate_rows = df.duplicated().sum()
+    
+    logging.info(f"Nombre total de lignes : {total_rows}")
+    logging.info(f"Nombre total de colonnes : {total_columns}")
+    logging.info(f"Colonnes : {column_names}")
+    logging.info(f"Nombre de doublons : {duplicate_rows}")
+    
+    # Optionnel : aperçu des doublons
+    if duplicate_rows > 0:
+        logging.info(f"Exemple de doublons :\n{df[df.duplicated()].head()}")
 
-#Informations sur le dataset
-#Informations sur le dataset === Nombre de lignes : 55500 Nombre de colonnes : 15
+if __name__ == "__main__":
+    # Chemin absolu du CSV, indépendant du dossier courant
+    base_dir = os.path.dirname(__file__)  # répertoire du script
+    csv_path = os.path.abspath(os.path.join(base_dir, "..", "dataset", "healthcare_dataset.csv"))
 
-#les colonnes : Colonnes et types : Name object Age int64 Gender object Blood Type object Medical Condition object Date of Admission object Doctor object Hospital object #Insurance Provider object Billing Amount float64 Room Number int64 Admission Type object Discharge Date object Medication object Test Results object dtype: object
+    analyze_dataset(csv_path)
 
-# Vérifier les doublons
-num_doublons = df.duplicated().sum()
-print(f"\nNombre de doublons : {num_doublons}")
-
-#faux doublons détectés 
-
-# Vérifier les valeurs manquantes
-print("\n=== Valeurs manquantes par colonne ===")
-print(df.isnull().sum()) 
 
 ```
 
-## Étape 3 : MongoDB conteneurisé
+## Étape 4 : MongoDB en local
+### installation de mongoDB en local (sur Windows, sur Linux (VM), MongoDB compass)
+### Création du script python de migration : mongo_migration.py
+### Authentification (création des utilisateurs (admin ,minimum) et rôles avant migration) Ou le faire lors de l'étape de conténarisation
+### migration des données dans mongoDB en local (vérification des collections, des enregistrement après migration)
+### (présence des fonction crud (delete, create, update, read)
+### script python de migration:mongo_migration.py:
+
+```
+import pandas as pd
+from pymongo import MongoClient, errors
+import os
+import sys
+import logging
+from dotenv import load_dotenv
+import socket
+import time
+
+# Charger les variables d'environnement depuis .env
+load_dotenv()
+
+# Configuration via variables d'environnement
+DB_NAME = os.environ.get("MONGO_DB", "medical_db")
+COLLECTION_NAME = os.environ.get("MONGO_COLL", "patients")
+MONGO_USER = os.environ.get("MONGO_MIGRATION_USER")
+MONGO_PASS = os.environ.get("MONGO_MIGRATION_PASS")
+AUTH_DB = os.environ.get("MONGO_AUTH_DB", DB_NAME)  # Auth sur la même base ou admin
+
+# Hosts et ports à tester (local et Docker)
+MONGO_HOSTS = {
+    "local": {
+        "host": os.environ.get("MONGO_LOCAL_HOST", "localhost"),
+        "port": int(os.environ.get("MONGO_LOCAL_PORT", 27017))
+    },
+    "docker": {
+        "host": os.environ.get("MONGO_DOCKER_HOST", "mongo_medical"),
+        "port": int(os.environ.get("MONGO_DOCKER_PORT", 27017))
+    }
+}
+
+# Chemin du CSV
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_PATH = os.environ.get(
+    "CSV_PATH",
+    os.path.normpath(os.path.join(BASE_DIR, "..", "dataset", "healthcare_dataset.csv"))
+)
+
+# Logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+# ==========================================================
+# FONCTIONS CSV
+# ==========================================================
+def load_csv(csv_path):
+    if not os.path.exists(csv_path):
+        logging.error(f"Le fichier CSV n'existe pas : {csv_path}")
+        sys.exit(1)
+    try:
+        logging.info(f"Lecture du CSV : {csv_path}")
+        try:
+            df = pd.read_csv(csv_path, encoding="utf-8")
+        except Exception:
+            df = pd.read_csv(csv_path, sep=";", encoding="utf-8")
+
+        logging.info(f"Colonnes détectées : {list(df.columns)}")
+        logging.info(f"Nombre de lignes : {len(df)}")
+        logging.info("Aperçu (5 premières lignes) :\n" + df.head().to_string())
+
+        # Conversion des colonnes de dates en chaînes
+        for date_col in ['Date of Admission', 'Discharge Date']:
+            if date_col in df.columns:
+                df[date_col] = df[date_col].astype(str)
+
+        if len(df) == 0:
+            logging.warning("Le fichier CSV est vide.")
+            sys.exit(1)
+        return df
+    except Exception as e:
+        logging.error(f"Impossible de lire le CSV : {e}")
+        sys.exit(1)
+
+# ==========================================================
+# FONCTIONS RESEAU
+# ==========================================================
+def is_host_reachable(host, port):
+    try:
+        with socket.create_connection((host, port), timeout=3):
+            return True
+    except Exception:
+        return False
+
+def wait_for_host(host, port, retries=10, delay=2):
+    for attempt in range(1, retries + 1):
+        if is_host_reachable(host, port):
+            return True
+        logging.info(f"Attente de {host}:{port} (tentative {attempt}/{retries})...")
+        time.sleep(delay)
+    logging.warning(f"{host}:{port} inaccessible après {retries} tentatives.")
+    return False
+
+# ==========================================================
+# FONCTION DE CONNEXION
+# ==========================================================
+def connect_to_mongo(host, port):
+    try:
+        client = MongoClient(
+            f"mongodb://{MONGO_USER}:{MONGO_PASS}@{host}:{port}/{DB_NAME}?authSource={AUTH_DB}",
+            serverSelectionTimeoutMS=5000
+        )
+        client.admin.command('ping')
+        db = client[DB_NAME]
+        collection = db[COLLECTION_NAME]
+        logging.info(f"Connexion réussie à {host}:{port} → {DB_NAME}.{COLLECTION_NAME}")
+        return collection
+    except errors.ServerSelectionTimeoutError as e:
+        logging.error(f"Impossible de se connecter à MongoDB ({host}:{port}): {e}")
+    except errors.OperationFailure as e:
+        logging.error(f"Erreur d'authentification sur {host}:{port}: {e}")
+    return None
+
+# ==========================================================
+# CRUD COMPLET
+# ==========================================================
+def create_documents(collection, data):
+    try:
+        result = collection.insert_many(data)
+        logging.info(f"{len(result.inserted_ids)} documents créés avec succès.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la création : {e}")
+
+def read_documents(collection, query={}, limit=5):
+    try:
+        docs = list(collection.find(query).limit(limit))
+        logging.info(f"Lecture {len(docs)} documents :\n{docs}")
+        return docs
+    except Exception as e:
+        logging.error(f"Erreur lors de la lecture : {e}")
+        return []
+
+def update_documents(collection, query, update):
+    try:
+        result = collection.update_many(query, {"$set": update})
+        logging.info(f"{result.modified_count} documents mis à jour.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la mise à jour : {e}")
+
+def delete_documents(collection, query={}):
+    try:
+        result = collection.delete_many(query)
+        logging.info(f"{result.deleted_count} documents supprimés.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la suppression : {e}")
+
+# ==========================================================
+# MIGRATION
+# ==========================================================
+def migrate_to_collection(collection, df, host_name):
+    if collection is None:
+        logging.warning(f"Migration ignorée pour {host_name} (collection non disponible).")
+        return
+    try:
+        delete_documents(collection)  # Purge
+        create_documents(collection, df.to_dict("records"))  # Insertion
+        if 'Name' in df.columns:
+            collection.create_index('Name')
+        if 'Date of Admission' in df.columns:
+            collection.create_index('Date of Admission')
+        logging.info(f"[{host_name}] Index créés sur 'Name' et 'Date of Admission'.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la migration sur {host_name}: {e}")
+
+# ==========================================================
+# MAIN PROGRAM
+# ==========================================================
+def main():
+    df = load_csv(CSV_PATH)
+
+    for host_name, host_info in MONGO_HOSTS.items():
+        host = host_info["host"]
+        port = host_info["port"]
+        logging.info(f"Tentative de connexion à {host_name} ({host}:{port})")
+        if wait_for_host(host, port):
+            collection = connect_to_mongo(host, port)
+            migrate_to_collection(collection, df, host_name)
+        else:
+            logging.warning(f"{host_name} ({host}:{port}) inaccessible, migration ignorée.")
+
+    logging.info("Migration terminée sur toutes les bases accessibles.")
+
+if __name__ == "__main__":
+    main()
+
+```
+
+
+## Étape 5 : MongoDB conteneurisé
 ### Créer l’arborescence du projet
 
 Dans ton projet, crée un dossier docker :
@@ -328,7 +558,7 @@ client = MongoClient("mongodb://localhost:27017/") db = client.test_db print(db.
 Tu devrais voir une liste vide pour l’instant, car aucune collection n’est encore créée.
 
 
-## Étape 4 : Script Python de migration vers MongoDB
+## Étape 6 : Modification du Script Python de migration vers MongoDB pour migration des données en local et dans le conteneur docker
 ### Créer l’environnement virtuel Python
 
 Ouvre PowerShell et place-toi dans le dossier du projet :
@@ -377,100 +607,421 @@ pip install -r .\MedicalMigration\scripts\requirements.txt
 
 À ce stade, ton environnement virtuel est prêt avec pandas et pymongo installés.
 
-## Créer le script Python de migration
 
-### Crée le fichier migrate_to_mongo.py dans le dossier scripts :
+### Modifié le fichier migrate_to_mongo.py dans le dossier scripts :
 ```
 notepad .\MedicalMigration\scripts\migrate_to_mongo.py
 ```
 
-Copie-colle ce code en adaptant le chemin CSV et le nom de la base/collection si nécessaire :
+### Authentifications (création d'utilisateur et rôle)
+### fichiers crées : auth_mongo.py, .env
+### auth_mongo.py (script de création des utilisateurs)
+### .env (script pour stocker les mots de passes pour des raisons sécuritaires, n'est pas exposé en public sur github)
+### .gitignore (pour ignorer les mots de passes pour ne pas qu'ils soient présent en public sur gitHub)
+### création de 3 utilisateurs (admin_user, read_user, migration_user)
 
+```
+
+\033[32m
+                              ┌──────────────────────────────┐
+                              │        Admin (admin_user)    │
+                              │------------------------------│
+                              │ Rôle : root                  │
+                              │ Accès : bases medical_db,    │
+                              │          MedicalMigration    │
+                              │ Auth DB : medical_db ou      │
+                              │           MedicalMigration   │
+                              │ Connexion :                  │
+                              │ mongosh -u admin_user -p password │
+                              │   --authenticationDatabase medical_db │
+                              └──────────────┬───────────────┘
+                                             │
+           ┌────────────────────────────────┴────────────────────────────────┐
+           │                                                                 │
+┌──────────────────────────────┐                         ┌──────────────────────────────┐
+│ Migration (migration_user)   │                         │ Lecture seule (read_user)   │
+│------------------------------│                         │-----------------------------│
+│ Rôle : readWrite             │                         │ Rôle : read                 │
+│ Accès : bases medical_db,    │                         │ Accès : bases medical_db,   │
+│          MedicalMigration    │                         │          MedicalMigration   │
+│ Auth DB : medical_db ou      │                         │ Auth DB : medical_db ou     │
+│           MedicalMigration   │                         │           MedicalMigration  │
+│ Connexion :                  │                         │ Connexion :                 │
+│ mongosh -u migration_user -p password │                 │ mongosh -u read_user -p password │
+│   --authenticationDatabase medical_db │                 │   --authenticationDatabase medical_db │
+│ Peut : insert / update / delete │                      │ Peut : uniquement find()    │
+│ Ne peut pas : créer d’utilisateurs │                   │ Ne peut pas : écrire        │
+└──────────────────────────────┘                         └─────────────────────────────┘
+
+```
+
+
+Ran 2 tests in X.XXXs
+OK
+
+➤ Étape 4 — Commit & Push
+git add .
+git commit -m "Ajout des tests unitaires du script de migration"
+git push origin feature/tests-unitaires
+
+B. Branche : feature/authentification
+➤ Étape 1 — Retour à main et création
+git checkout main
+git pull origin main
+git checkout -b feature/authentification
+
+➤ Étape 2 — Créer le répertoire et le fichier
+mkdir MedicalMigration\auth
+notepad MedicalMigration\auth\auth_mongo.py
+
+
+### script : auth_mongo.py
+
+Colle le script 
+
+
+```
+import os
+from pymongo import MongoClient
+import logging
+
+# === Logging ===
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+# === Récupération des credentials depuis variables d'environnement ===
+ADMIN_USER = os.environ.get("MONGO_ADMIN_USER", "admin_user")
+ADMIN_PASS = os.environ.get("MONGO_ADMIN_PASS", "securePass123")
+
+MIGRATION_USER = os.environ.get("MONGO_MIGRATION_USER", "migration_user")
+MIGRATION_PASS = os.environ.get("MONGO_MIGRATION_PASS", "migrationPass!")
+
+READ_USER = os.environ.get("MONGO_READ_USER", "read_user")
+READ_PASS = os.environ.get("MONGO_READ_PASS", "readonly123")
+
+# === Connexion au serveur MongoDB ===
+import os
+from pymongo import MongoClient
+import logging
+from dotenv import load_dotenv
+
+# === Charger les variables d'environnement depuis un fichier .env si présent ===
+load_dotenv()
+
+# === Logging ===
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+# === Récupération des credentials depuis variables d'environnement ===
+try:
+    ADMIN_USER = os.environ["MONGO_ADMIN_USER"]
+    ADMIN_PASS = os.environ["MONGO_ADMIN_PASS"]
+    MIGRATION_USER = os.environ["MONGO_MIGRATION_USER"]
+    MIGRATION_PASS = os.environ["MONGO_MIGRATION_PASS"]
+    READ_USER = os.environ["MONGO_READ_USER"]
+    READ_PASS = os.environ["MONGO_READ_PASS"]
+except KeyError as e:
+    logging.error(f"Variable d'environnement manquante : {e}")
+    exit(1)
+
+# === Connexion au serveur MongoDB avec admin pour pouvoir créer des utilisateurs ===
+client = MongoClient(f"mongodb://{ADMIN_USER}:{ADMIN_PASS}@localhost:27017/admin")
+
+def create_user_if_not_exists(db_name, username, password, roles):
+    db = client.get_database(db_name)
+    try:
+        existing_users = [user["user"] for user in db.command("usersInfo")["users"]]
+        if username in existing_users:
+            logging.info(f"Utilisateur '{username}' existe déjà dans la DB '{db_name}'.")
+            return
+        db.command(
+            "createUser",
+            username,
+            pwd=password,
+            roles=roles
+        )
+        logging.info(f"Utilisateur '{username}' créé avec succès dans la DB '{db_name}'.")
+    except Exception as e:
+        logging.warning(f"Erreur création utilisateur '{username}': {e}")
+
+if __name__ == "__main__":
+    # Créer les utilisateurs si nécessaire
+    create_user_if_not_exists("admin", ADMIN_USER, ADMIN_PASS, [{"role": "userAdminAnyDatabase", "db": "admin"}])
+    create_user_if_not_exists("MedicalMigration", MIGRATION_USER, MIGRATION_PASS, [{"role": "readWrite", "db": "MedicalMigration"}])
+    create_user_if_not_exists("MedicalMigration", READ_USER, READ_PASS, [{"role": "read", "db": "MedicalMigration"}])
+    logging.info("Vérification/création des utilisateurs terminée !")
+
+```
+
+### Deux manières de créer les utilisateurs et les roles: soit en exécutant le script (d'abord lancé mongodb en mode sans authentification avant de lancer le script
+et après l'exécution du script, lancé mondb avec le mode authentification et essayé de se connecter puis exécuté le script de migration)
+soit en se connectant à mongodb directement et créer les utilisateurs et rôle manuellement
+
+>>Se connecte au serveur MongoDB local.
+
+Crée trois utilisateurs avec des rôles différents :
+
+admin_user → administrateur capable de gérer toutes les bases et utilisateurs.
+
+migration_user → peut lire et écrire dans la base MedicalMigration.
+
+read_user → peut seulement lire les données dans la base MedicalMigration.
+
+Utilise les mots de passe définis dans les variables d’environnement.
+
+Affiche des logs pour confirmer la création ou signaler un problème (ex : utilisateur déjà existant).
+
+
+### Variables d’environnement
+
+Assure-toi qu’elles sont bien définies dans le même terminal où tu exécutes le script :
+
+set MONGO_MIGRATION_USER=migration_user
+set MONGO_MIGRATION_PASS=MigrationPass!
+set MONGO_HOST=localhost
+set MONGO_PORT=27017
+set MONGO_DB=MedicalMigration
+set MONGO_COLL=patients
+
+
+Puis exécute ton script dans ce terminal :
+
+python mongo_migration.py
+
+➤ Étape 3 — Tester
+python MedicalMigration/auth/auth_mongo.py
+
+
+Puis dans mongosh :
+
+mongosh
+use admin
+db.system.users.find().pretty()
+
+
+pour se connecter avec les différents users :
+
+
+### Admin (admin_user)
+
+Accès complet pour gérer les utilisateurs et les bases :
+
+mongosh -u admin_user -p SuperSecret123 --authenticationDatabase admin
+
+
+-u : nom de l’utilisateur
+
+-p : mot de passe
+
+--authenticationDatabase : base utilisée pour authentification (ici admin)
+
+Une fois connecté, tu peux gérer les utilisateurs, créer des bases, etc.
+
+### Migration (migration_user)
+
+Accès en lecture/écriture sur la base MedicalMigration uniquement :
+
+mongosh -u migration_user -p MigrationPass! --authenticationDatabase MedicalMigration
+
+
+Peut insérer, mettre à jour et supprimer des documents dans MedicalMigration.
+
+Ne peut pas créer d’utilisateurs ni gérer d’autres bases.
+
+### Lecture seule (read_user)
+
+Accès limité en lecture seule sur la base MedicalMigration :
+
+mongosh -u read_user -p ReadOnly123 --authenticationDatabase MedicalMigration
+
+
+Peut seulement lire les documents (find()) dans la base MedicalMigration.
+
+Toute tentative d’insertion, mise à jour ou suppression sera refusée.
+
+### migration de données 
+Copie-colle ce code en adaptant le chemin CSV et le nom de la base/collection si nécessaire :
 ```
 import pandas as pd
 from pymongo import MongoClient, errors
 import os
 import sys
 import logging
+from dotenv import load_dotenv
+import socket
+import time
 
-# === Configuration via variables d'environnement ===
-# Détection automatique :
-# - Si variable MONGO_HOST est définie (ex: Docker), utilise sa valeur
-# - Sinon, utilise localhost pour MongoDB local
-MONGO_HOST = os.environ.get("MONGO_HOST", "localhost")
-MONGO_PORT = int(os.environ.get("MONGO_PORT", 27017))
+# Charger les variables d'environnement depuis .env
+load_dotenv()
+
+# Configuration via variables d'environnement
 DB_NAME = os.environ.get("MONGO_DB", "medical_db")
 COLLECTION_NAME = os.environ.get("MONGO_COLL", "patients")
+MONGO_USER = os.environ.get("MONGO_MIGRATION_USER")
+MONGO_PASS = os.environ.get("MONGO_MIGRATION_PASS")
+AUTH_DB = os.environ.get("MONGO_AUTH_DB", DB_NAME)  # Auth sur la même base ou admin
 
+# Hosts et ports à tester (local et Docker)
+MONGO_HOSTS = {
+    "local": {
+        "host": os.environ.get("MONGO_LOCAL_HOST", "localhost"),
+        "port": int(os.environ.get("MONGO_LOCAL_PORT", 27017))
+    },
+    "docker": {
+        "host": os.environ.get("MONGO_DOCKER_HOST", "mongo_medical"),
+        "port": int(os.environ.get("MONGO_DOCKER_PORT", 27017))
+    }
+}
+
+# Chemin du CSV
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.environ.get(
     "CSV_PATH",
-    r"C:\Users\yeodr\Migration_donnees_medicales\MedicalMigration\dataset\healthcare_dataset.csv"
+    os.path.normpath(os.path.join(BASE_DIR, "..", "dataset", "healthcare_dataset.csv"))
 )
 
-# === Logging ===
+# Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# === Lecture du CSV ===
-try:
-    logging.info(f"Lecture du CSV : {CSV_PATH}")
-
-    # Tentative lecture CSV avec détection du séparateur
+# ==========================================================
+# FONCTIONS CSV
+# ==========================================================
+def load_csv(csv_path):
+    if not os.path.exists(csv_path):
+        logging.error(f"Le fichier CSV n'existe pas : {csv_path}")
+        sys.exit(1)
     try:
-        df = pd.read_csv(CSV_PATH, encoding="utf-8")
+        logging.info(f"Lecture du CSV : {csv_path}")
+        try:
+            df = pd.read_csv(csv_path, encoding="utf-8")
+        except Exception:
+            df = pd.read_csv(csv_path, sep=";", encoding="utf-8")
+
+        logging.info(f"Colonnes détectées : {list(df.columns)}")
+        logging.info(f"Nombre de lignes : {len(df)}")
+        logging.info("Aperçu (5 premières lignes) :\n" + df.head().to_string())
+
+        # Conversion des colonnes de dates en chaînes
+        for date_col in ['Date of Admission', 'Discharge Date']:
+            if date_col in df.columns:
+                df[date_col] = df[date_col].astype(str)
+
+        if len(df) == 0:
+            logging.warning("Le fichier CSV est vide.")
+            sys.exit(1)
+        return df
+    except Exception as e:
+        logging.error(f"Impossible de lire le CSV : {e}")
+        sys.exit(1)
+
+# ==========================================================
+# FONCTIONS RESEAU
+# ==========================================================
+def is_host_reachable(host, port):
+    try:
+        with socket.create_connection((host, port), timeout=3):
+            return True
     except Exception:
-        df = pd.read_csv(CSV_PATH, sep=";", encoding="utf-8")
+        return False
 
-    logging.info("=== Diagnostic CSV ===")
-    logging.info(f"Colonnes détectées : {list(df.columns)}")
-    logging.info(f"Nombre de lignes : {len(df)}")
-    logging.info("Aperçu (5 premières lignes) :\n" + df.head().to_string())
+def wait_for_host(host, port, retries=10, delay=2):
+    for attempt in range(1, retries + 1):
+        if is_host_reachable(host, port):
+            return True
+        logging.info(f"Attente de {host}:{port} (tentative {attempt}/{retries})...")
+        time.sleep(delay)
+    logging.warning(f"{host}:{port} inaccessible après {retries} tentatives.")
+    return False
 
-    # Conversion des dates en string pour MongoDB
-    for date_col in ['Date of Admission', 'Discharge Date']:
-        if date_col in df.columns:
-            df[date_col] = df[date_col].astype(str)
+# ==========================================================
+# FONCTION DE CONNEXION
+# ==========================================================
+def connect_to_mongo(host, port):
+    try:
+        client = MongoClient(
+            f"mongodb://{MONGO_USER}:{MONGO_PASS}@{host}:{port}/{DB_NAME}?authSource={AUTH_DB}",
+            serverSelectionTimeoutMS=5000
+        )
+        client.admin.command('ping')
+        db = client[DB_NAME]
+        collection = db[COLLECTION_NAME]
+        logging.info(f"Connexion réussie à {host}:{port} → {DB_NAME}.{COLLECTION_NAME}")
+        return collection
+    except errors.ServerSelectionTimeoutError as e:
+        logging.error(f"Impossible de se connecter à MongoDB ({host}:{port}): {e}")
+    except errors.OperationFailure as e:
+        logging.error(f"Erreur d'authentification sur {host}:{port}: {e}")
+    return None
 
-except Exception as e:
-    logging.error(f"Impossible de lire le CSV : {e}")
-    sys.exit(1)
+# ==========================================================
+# CRUD COMPLET
+# ==========================================================
+def create_documents(collection, data):
+    try:
+        result = collection.insert_many(data)
+        logging.info(f"{len(result.inserted_ids)} documents créés avec succès.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la création : {e}")
 
-if len(df) == 0:
-    logging.warning("Le fichier CSV est vide. Vérifie le séparateur ou le chemin.")
-    sys.exit(1)
+def read_documents(collection, query={}, limit=5):
+    try:
+        docs = list(collection.find(query).limit(limit))
+        logging.info(f"Lecture {len(docs)} documents :\n{docs}")
+        return docs
+    except Exception as e:
+        logging.error(f"Erreur lors de la lecture : {e}")
+        return []
 
-# === Connexion à MongoDB ===
-try:
-    client = MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}/", serverSelectionTimeoutMS=5000)
-    client.admin.command('ping')  # Test de connexion
-    db = client[DB_NAME]
-    collection = db[COLLECTION_NAME]
-    logging.info(f"Connexion à MongoDB réussie : {DB_NAME}.{COLLECTION_NAME}")
-except errors.ServerSelectionTimeoutError as e:
-    logging.error(f"Impossible de se connecter à MongoDB : {e}")
-    sys.exit(1)
+def update_documents(collection, query, update):
+    try:
+        result = collection.update_many(query, {"$set": update})
+        logging.info(f"{result.modified_count} documents mis à jour.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la mise à jour : {e}")
 
-# === Optionnel : vider la collection avant insertion ===
-try:
-    deleted_count = collection.delete_many({}).deleted_count
-    if deleted_count > 0:
-        logging.info(f"Collection vidée : {deleted_count} documents supprimés.")
-except Exception as e:
-    logging.error(f"Erreur lors de la purge de la collection : {e}")
+def delete_documents(collection, query={}):
+    try:
+        result = collection.delete_many(query)
+        logging.info(f"{result.deleted_count} documents supprimés.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la suppression : {e}")
 
-# === Insertion des données ===
-try:
-    result = collection.insert_many(df.to_dict("records"))
-    logging.info(f"Migration terminée avec succès ! {len(result.inserted_ids)} documents insérés.")
+# ==========================================================
+# MIGRATION
+# ==========================================================
+def migrate_to_collection(collection, df, host_name):
+    if collection is None:
+        logging.warning(f"Migration ignorée pour {host_name} (collection non disponible).")
+        return
+    try:
+        delete_documents(collection)  # Purge
+        create_documents(collection, df.to_dict("records"))  # Insertion
+        if 'Name' in df.columns:
+            collection.create_index('Name')
+        if 'Date of Admission' in df.columns:
+            collection.create_index('Date of Admission')
+        logging.info(f"[{host_name}] Index créés sur 'Name' et 'Date of Admission'.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la migration sur {host_name}: {e}")
 
-    # Création d'index
-    if 'Name' in df.columns:
-        collection.create_index('Name')
-    if 'Date of Admission' in df.columns:
-        collection.create_index('Date of Admission')
-    logging.info("Index créés sur 'Name' et 'Date of Admission'.")
-except Exception as e:
-    logging.error(f"Erreur lors de l’insertion : {e}")
+# ==========================================================
+# MAIN PROGRAM
+# ==========================================================
+def main():
+    df = load_csv(CSV_PATH)
 
+    for host_name, host_info in MONGO_HOSTS.items():
+        host = host_info["host"]
+        port = host_info["port"]
+        logging.info(f"Tentative de connexion à {host_name} ({host}:{port})")
+        if wait_for_host(host, port):
+            collection = connect_to_mongo(host, port)
+            migrate_to_collection(collection, df, host_name)
+        else:
+            logging.warning(f"{host_name} ({host}:{port}) inaccessible, migration ignorée.")
+
+    logging.info("Migration terminée sur toutes les bases accessibles.")
+
+if __name__ == "__main__":
+    main()
 
 ```
 
@@ -487,7 +1038,7 @@ python .\MedicalMigration\scripts\migrate_to_mongo.py
 
 2025-10-16 22:04:43,649 - INFO - Connexion à MongoDB réussie : medical_db.patients!
 
-### Option 1 : Déplacer le CSV dans le dossier dataset (optionnel)
+### Optionnel 1 : Déplacer le CSV dans le dossier dataset (optionnel)
 Crée le dossier dataset si ce n’est pas déjà fait :
 
 ```
@@ -536,7 +1087,7 @@ Cherche l’interface eth0.
 L’IP affichée est celle du conteneur.
 
 
-## l'adresse ip est ajouté au script pour favoriser la mgration, mais j'ai plutôt utilisé le nom du contenaire 
+## l'adresse ip est ajouté au script pour favoriser la mgration, mais j'ai plutôt utilisé le nom du conteneur 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -546,7 +1097,7 @@ Traceback (most recent call last): File "/app/scripts/migrate_to_mongo.py", line
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-# Etape 4 : conteneurisez l'application avec docker
+# Etape 6 : conteneurisez l'application avec docker
 
 
 ## Arborescence des fichiers
@@ -555,23 +1106,37 @@ Migration_donnees_medicales/
 │
 ├─ MedicalMigration/
 │  ├─ scripts/
-│  │  └─ migrate_to_mongo.py          # script principal de migration (CRUD complet)
+│  │  ├─ migrate_to_mongo.py        # script principal de migration (CRUD complet)
+│  │  ├─ data_cleaning.py           # pré-traitement du dataset
+│  │  ├─ mongo_migration.py         # fonctions MongoDB supplémentaires (si nécessaire)
+│  │  └─ __pycache__/               # fichiers compilés Python
+│  │
+│  ├─ auth/
+│  │  └─ auth_mongo.py              # gestion des utilisateurs MongoDB
+│  │
 │  ├─ dataset/
-│  │  └─ healthcare_dataset.csv       # dataset médical source
-│  ├─ requirements.txt                # dépendances Python
+│  │  └─ healthcare_dataset.csv     # dataset médical source
+│  │
+│  ├─ __init__.py                   # rendre MedicalMigration un package Python
+│  ├─ requirements.txt              # dépendances Python
+│  └─ .github/
+│     └─ workflows/
+│        └─ ci_cd.yml               # pipeline CI/CD GitHub Actions
 │
 ├─ docker/
-│  ├─ Dockerfile                      # image de l’application Python
-│  └─ docker-compose.yml              # orchestration MongoDB + app
+│  ├─ Dockerfile                     # image Python + MongoDB client
+│  └─ docker-compose.yml             # orchestration MongoDB + app
 │
 ├─ schema/
-│  └─ medical_db.patients.json        # schéma JSON de la base MongoDB
+│  └─ medical_db.patients.json       # schéma JSON de la base MongoDB
 │
 ├─ tests/
-│  └─ test_migration.py               # tests unitaires pour le script de migration
+│  ├─ test_migration.py              # tests unitaires pour migrate_to_mongo.py
+│  └─ __pycache__/                   # fichiers compilés Python
 │
+├─ .env                              # variables d’environnement (MongoDB URI, credentials)
 ├─ README.md                          # documentation principale du projet
-└─ .gitignore                         # fichiers à ne pas pousser sur GitHub (ex: CSV, logs)
+└─ .gitignore                         # fichiers à ne pas pousser (logs, CSV, venv, etc.)
 
 
 
@@ -605,9 +1170,11 @@ Permet de construire l’image Python qui exécutera le script de migration.
 ## créer un fichier requirements.txt et coller :
 
 ```
-pandas==2.1.0
+pandas==2.0.3
 numpy==1.26.0
 pymongo==4.6.1
+python-dotenv==1.0.1
+
 ```
 
 ### le fichier requirements.txt sert à décrire tous les modules Python nécessaires pour faire fonctionner ton projet 
@@ -627,36 +1194,61 @@ docker ps -a
 ## docker-compose.yml (dans docker/) : créer le fichier
 
 ```
-version: '3.8'
-
 services:
   mongo:
     image: mongo:latest
-    container_name: medical_mongo
+    container_name: mongo_medical
     ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db          # Volume pour persistance MongoDB
-    restart: always
-
-  python_migration:
-    build:
-      context: ../MedicalMigration     # Chemin vers ton Dockerfile et scripts
-    container_name: migration_script
-    depends_on:
-      - mongo
-    volumes:
-      - ../MedicalMigration/dataset:/app/dataset   # Volume pour le CSV
+      - "27018:27017"  # accès MongoDB depuis l'hôte
     environment:
-      - MONGO_HOST=mongo             # Nom du service Mongo pour Docker
-      - MONGO_PORT=27017
-      - MONGO_DB=medical_db
-      - MONGO_COLL=patients
-      - CSV_PATH=/app/dataset/healthcare_dataset.csv
-    command: ["python", "scripts/migrate_to_mongo.py"]
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ADMIN_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ADMIN_PASS}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
+
+      # Utilisateurs supplémentaires pour init-mongo.js
+      MONGO_MIGRATION_USER: ${MONGO_MIGRATION_USER}
+      MONGO_MIGRATION_PASS: ${MONGO_MIGRATION_PASS}
+      MONGO_READ_USER: ${MONGO_READ_USER}
+      MONGO_READ_PASS: ${MONGO_READ_PASS}
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - mongo_data:/data/db
+    networks:
+      - medical_net
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({ ping: 1 })' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  migration:
+    build:
+      context: ..                    # dossier parent
+      dockerfile: docker/Dockerfile
+    env_file:
+      - .env                         # récupération des variables depuis le fichier .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ../MedicalMigration/dataset:/app/dataset
+      - ../MedicalMigration/scripts:/app/scripts
+    environment:
+      MONGO_DOCKER_HOST: mongo_medical
+      MONGO_DOCKER_PORT: 27017
+      CSV_PATH: /app/dataset/healthcare_dataset.csv
+    networks:
+      - medical_net
+    command: python /app/scripts/mongo_migration.py
 
 volumes:
-  mongo_data: {}
+  mongo_data:
+
+networks:
+  medical_net:
+    driver: bridge
+
 
 ```
 
@@ -667,95 +1259,192 @@ Le conteneur Python utilise MONGO_HOST=mongo pour se connecter au conteneur Mong
 Assure-toi que dans le script, tu as :
 
 ```
-
 import pandas as pd
 from pymongo import MongoClient, errors
 import os
 import sys
 import logging
+from dotenv import load_dotenv
+import socket
+import time
 
-# === Configuration via variables d'environnement ===
-# Détection automatique :
-# - Si variable MONGO_HOST est définie (ex: Docker), utilise sa valeur
-# - Sinon, utilise localhost pour MongoDB local
-MONGO_HOST = os.environ.get("MONGO_HOST", "localhost")
-MONGO_PORT = int(os.environ.get("MONGO_PORT", 27017))
+# Charger les variables d'environnement depuis .env
+load_dotenv()
+
+# Configuration via variables d'environnement
 DB_NAME = os.environ.get("MONGO_DB", "medical_db")
 COLLECTION_NAME = os.environ.get("MONGO_COLL", "patients")
+MONGO_USER = os.environ.get("MONGO_MIGRATION_USER")
+MONGO_PASS = os.environ.get("MONGO_MIGRATION_PASS")
+AUTH_DB = os.environ.get("MONGO_AUTH_DB", DB_NAME)  # Auth sur la même base ou admin
 
+# Hosts et ports à tester (local et Docker)
+MONGO_HOSTS = {
+    "local": {
+        "host": os.environ.get("MONGO_LOCAL_HOST", "localhost"),
+        "port": int(os.environ.get("MONGO_LOCAL_PORT", 27017))
+    },
+    "docker": {
+        "host": os.environ.get("MONGO_DOCKER_HOST", "mongo_medical"),
+        "port": int(os.environ.get("MONGO_DOCKER_PORT", 27017))
+    }
+}
+
+# Chemin du CSV
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.environ.get(
     "CSV_PATH",
-    r"C:\Users\yeodr\Migration_donnees_medicales\MedicalMigration\dataset\healthcare_dataset.csv"
+    os.path.normpath(os.path.join(BASE_DIR, "..", "dataset", "healthcare_dataset.csv"))
 )
 
-# === Logging ===
+# Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# === Lecture du CSV ===
-try:
-    logging.info(f"Lecture du CSV : {CSV_PATH}")
-
-    # Tentative lecture CSV avec détection du séparateur
+# ==========================================================
+# FONCTIONS CSV
+# ==========================================================
+def load_csv(csv_path):
+    if not os.path.exists(csv_path):
+        logging.error(f"Le fichier CSV n'existe pas : {csv_path}")
+        sys.exit(1)
     try:
-        df = pd.read_csv(CSV_PATH, encoding="utf-8")
+        logging.info(f"Lecture du CSV : {csv_path}")
+        try:
+            df = pd.read_csv(csv_path, encoding="utf-8")
+        except Exception:
+            df = pd.read_csv(csv_path, sep=";", encoding="utf-8")
+
+        logging.info(f"Colonnes détectées : {list(df.columns)}")
+        logging.info(f"Nombre de lignes : {len(df)}")
+        logging.info("Aperçu (5 premières lignes) :\n" + df.head().to_string())
+
+        # Conversion des colonnes de dates en chaînes
+        for date_col in ['Date of Admission', 'Discharge Date']:
+            if date_col in df.columns:
+                df[date_col] = df[date_col].astype(str)
+
+        if len(df) == 0:
+            logging.warning("Le fichier CSV est vide.")
+            sys.exit(1)
+        return df
+    except Exception as e:
+        logging.error(f"Impossible de lire le CSV : {e}")
+        sys.exit(1)
+
+# ==========================================================
+# FONCTIONS RESEAU
+# ==========================================================
+def is_host_reachable(host, port):
+    try:
+        with socket.create_connection((host, port), timeout=3):
+            return True
     except Exception:
-        df = pd.read_csv(CSV_PATH, sep=";", encoding="utf-8")
+        return False
 
-    logging.info("=== Diagnostic CSV ===")
-    logging.info(f"Colonnes détectées : {list(df.columns)}")
-    logging.info(f"Nombre de lignes : {len(df)}")
-    logging.info("Aperçu (5 premières lignes) :\n" + df.head().to_string())
+def wait_for_host(host, port, retries=10, delay=2):
+    for attempt in range(1, retries + 1):
+        if is_host_reachable(host, port):
+            return True
+        logging.info(f"Attente de {host}:{port} (tentative {attempt}/{retries})...")
+        time.sleep(delay)
+    logging.warning(f"{host}:{port} inaccessible après {retries} tentatives.")
+    return False
 
-    # Conversion des dates en string pour MongoDB
-    for date_col in ['Date of Admission', 'Discharge Date']:
-        if date_col in df.columns:
-            df[date_col] = df[date_col].astype(str)
+# ==========================================================
+# FONCTION DE CONNEXION
+# ==========================================================
+def connect_to_mongo(host, port):
+    try:
+        client = MongoClient(
+            f"mongodb://{MONGO_USER}:{MONGO_PASS}@{host}:{port}/{DB_NAME}?authSource={AUTH_DB}",
+            serverSelectionTimeoutMS=5000
+        )
+        client.admin.command('ping')
+        db = client[DB_NAME]
+        collection = db[COLLECTION_NAME]
+        logging.info(f"Connexion réussie à {host}:{port} → {DB_NAME}.{COLLECTION_NAME}")
+        return collection
+    except errors.ServerSelectionTimeoutError as e:
+        logging.error(f"Impossible de se connecter à MongoDB ({host}:{port}): {e}")
+    except errors.OperationFailure as e:
+        logging.error(f"Erreur d'authentification sur {host}:{port}: {e}")
+    return None
 
-except Exception as e:
-    logging.error(f"Impossible de lire le CSV : {e}")
-    sys.exit(1)
+# ==========================================================
+# CRUD COMPLET
+# ==========================================================
+def create_documents(collection, data):
+    try:
+        result = collection.insert_many(data)
+        logging.info(f"{len(result.inserted_ids)} documents créés avec succès.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la création : {e}")
 
-if len(df) == 0:
-    logging.warning("Le fichier CSV est vide. Vérifie le séparateur ou le chemin.")
-    sys.exit(1)
+def read_documents(collection, query={}, limit=5):
+    try:
+        docs = list(collection.find(query).limit(limit))
+        logging.info(f"Lecture {len(docs)} documents :\n{docs}")
+        return docs
+    except Exception as e:
+        logging.error(f"Erreur lors de la lecture : {e}")
+        return []
 
-# === Connexion à MongoDB ===
-try:
-    client = MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}/", serverSelectionTimeoutMS=5000)
-    client.admin.command('ping')  # Test de connexion
-    db = client[DB_NAME]
-    collection = db[COLLECTION_NAME]
-    logging.info(f"Connexion à MongoDB réussie : {DB_NAME}.{COLLECTION_NAME}")
-except errors.ServerSelectionTimeoutError as e:
-    logging.error(f"Impossible de se connecter à MongoDB : {e}")
-    sys.exit(1)
+def update_documents(collection, query, update):
+    try:
+        result = collection.update_many(query, {"$set": update})
+        logging.info(f"{result.modified_count} documents mis à jour.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la mise à jour : {e}")
 
-# === Optionnel : vider la collection avant insertion ===
-try:
-    deleted_count = collection.delete_many({}).deleted_count
-    if deleted_count > 0:
-        logging.info(f"Collection vidée : {deleted_count} documents supprimés.")
-except Exception as e:
-    logging.error(f"Erreur lors de la purge de la collection : {e}")
+def delete_documents(collection, query={}):
+    try:
+        result = collection.delete_many(query)
+        logging.info(f"{result.deleted_count} documents supprimés.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la suppression : {e}")
 
-# === Insertion des données ===
-try:
-    result = collection.insert_many(df.to_dict("records"))
-    logging.info(f"Migration terminée avec succès ! {len(result.inserted_ids)} documents insérés.")
+# ==========================================================
+# MIGRATION
+# ==========================================================
+def migrate_to_collection(collection, df, host_name):
+    if collection is None:
+        logging.warning(f"Migration ignorée pour {host_name} (collection non disponible).")
+        return
+    try:
+        delete_documents(collection)  # Purge
+        create_documents(collection, df.to_dict("records"))  # Insertion
+        if 'Name' in df.columns:
+            collection.create_index('Name')
+        if 'Date of Admission' in df.columns:
+            collection.create_index('Date of Admission')
+        logging.info(f"[{host_name}] Index créés sur 'Name' et 'Date of Admission'.")
+    except Exception as e:
+        logging.error(f"Erreur lors de la migration sur {host_name}: {e}")
 
-    # Création d'index
-    if 'Name' in df.columns:
-        collection.create_index('Name')
-    if 'Date of Admission' in df.columns:
-        collection.create_index('Date of Admission')
-    logging.info("Index créés sur 'Name' et 'Date of Admission'.")
-except Exception as e:
-    logging.error(f"Erreur lors de l’insertion : {e}")
+# ==========================================================
+# MAIN PROGRAM
+# ==========================================================
+def main():
+    df = load_csv(CSV_PATH)
 
+    for host_name, host_info in MONGO_HOSTS.items():
+        host = host_info["host"]
+        port = host_info["port"]
+        logging.info(f"Tentative de connexion à {host_name} ({host}:{port})")
+        if wait_for_host(host, port):
+            collection = connect_to_mongo(host, port)
+            migrate_to_collection(collection, df, host_name)
+        else:
+            logging.warning(f"{host_name} ({host}:{port}) inaccessible, migration ignorée.")
+
+    logging.info("Migration terminée sur toutes les bases accessibles.")
+
+if __name__ == "__main__":
+    main()
 
 ```
 
-## Comme ça, le même script fonctionne dans Docker et peut être adapté à un MongoDB local si nécessaire.
+## Comme ça, le même script fonctionne à la fois dans le conteneur docker et en local 
 
 
 
@@ -768,7 +1457,7 @@ docker-compose up --build
 
 ## Docker Compose va :
 
-**Démarrer MongoDB avec persistance (mongo_data)**
+**Démarrer MongoDB avec persistance (mongo_medical)**
 
 **Construire l’image Python**
 
@@ -816,14 +1505,46 @@ Objectif : migrer un dataset médical volumineux vers MongoDB, conteneuriser la 
 **Contrôle des doublons et des valeurs manquantes.**
 
 Création de l’arborescence du projet :
+
 ```
 Migration_donnees_medicales/
+│
 ├─ MedicalMigration/
-│  ├─ scripts/migrate_to_mongo.py
-│  ├─ dataset/healthcare_dataset.csv
-│  ├─ Dockerfile
-│  └─ requirements.txt
-└─ docker/docker-compose.yml
+│  ├─ scripts/
+│  │  ├─ migrate_to_mongo.py        # script principal de migration (CRUD complet)
+│  │  ├─ data_cleaning.py           # pré-traitement du dataset
+│  │  ├─ mongo_migration.py         # fonctions MongoDB supplémentaires (si nécessaire)
+│  │  └─ __pycache__/               # fichiers compilés Python
+│  │
+│  ├─ auth/
+│  │  └─ auth_mongo.py              # gestion des utilisateurs MongoDB
+│  │
+│  ├─ dataset/
+│  │  └─ healthcare_dataset.csv     # dataset médical source
+│  │
+│  ├─ __init__.py                   # rendre MedicalMigration un package Python
+│  ├─ requirements.txt              # dépendances Python
+│  └─ .github/
+│     └─ workflows/
+│        └─ ci_cd.yml               # pipeline CI/CD GitHub Actions
+│
+├─ docker/
+│  ├─ Dockerfile                     # image Python + MongoDB client
+│  └─ docker-compose.yml             # orchestration MongoDB + app
+│
+├─ schema/
+│  └─ medical_db.patients.json       # schéma JSON de la base MongoDB
+│
+├─ tests/
+│  ├─ test_migration.py              # tests unitaires pour migrate_to_mongo.py
+│  └─ __pycache__/                   # fichiers compilés Python
+│
+├─ .env                              # variables d’environnement (MongoDB URI, credentials)
+├─ README.md                          # documentation principale du projet
+└─ .gitignore                         # fichiers à ne pas pousser (logs, CSV, venv, etc.)
+
+
+
 ```
 
 ## Mise en place et test de MongoDB avec Docker Compose :
@@ -846,9 +1567,10 @@ Migration_donnees_medicales/
 
 ## Création du fichier requirements.txt :
 ```
-pandas==2.1.0
+pandas==2.0.3
 numpy==1.26.0
 pymongo==4.6.1
+python-dotenv==1.0.1
 
 ```
 
@@ -886,6 +1608,716 @@ db.patients.countDocuments()
 **Base MongoDB peuplée à partir du CSV.**
 
 **Conteneurisation complète prête pour un déploiement futur sur AWS.**
+
+
+### Gestion et modification des branches 
+
+# Créaion des autres branches, script et test
+
+PROCÉDURE COMPLÈTE — MIGRATION MÉDICALE (branche par branche)
+
+Ces étapes s’appliquent à chaque branche :
+
+feature/tests-unitaires
+
+feature/authentification
+
+feature/analyse-donnees
+
+feature/configuration-docker
+
+## SE POSITIONNER SUR LA BRANCHE PRINCIPALE
+
+Toujours partir de la dernière version stable du projet :
+
+cd C:\Users\yeodr\Migration_donnees_medicales
+git checkout main
+git pull origin main
+
+
+Cela garantit que tu travailles sur la version la plus récente avant de créer une nouvelle branche.
+
+## CRÉER LA NOUVELLE BRANCHE
+
+Exemple :
+
+git checkout -b feature/tests-unitaires
+
+
+Répéter ensuite pour chaque fonctionnalité :
+
+git checkout -b feature/authentification
+git checkout -b feature/analyse-donnees
+git checkout -b feature/configuration-docker
+
+## CONNEXION AU NŒUD & AJOUT DU CONTENU SPÉCIFIQUE
+## A. Branche : feature/tests-unitaires
+➤ Étape 1 — Se placer dans le bon dossier
+cd C:\Users\yeodr\Migration_donnees_medicales
+mkdir tests
+cd tests
+
+➤ Étape 2 — Créer le fichier de test
+notepad test_migration.py
+
+
+Colle le script suivant 
+
+```
+import unittest
+import pandas as pd
+import sys
+import os
+
+# --- Ajouter le dossier racine pour que Python trouve le package ---
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from MedicalMigration.scripts.mongo_migration import (
+    connect_to_mongo,
+    create_documents,
+    update_documents,
+    delete_documents,
+    read_documents
+)
+
+class TestMigration(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        """Initialisation avant tous les tests"""
+        # Connexion à la collection
+        cls.collection = connect_to_mongo("localhost", 27017)  # adapter host/port si nécessaire
+        cls.df = pd.DataFrame([
+            {"Name": "TestUser_Temp", "Date of Admission": "2024-01-01", "Discharge Date": "2024-01-10"}
+        ])
+        # Nombre initial de documents
+        cls.initial_count = cls.collection.count_documents({})
+
+    def test_insert_data(self):
+        """Test de l'insertion de documents factices"""
+        create_documents(self.collection, self.df.to_dict("records"))
+        docs = read_documents(self.collection, {"Name": "TestUser_Temp"})
+        self.assertEqual(len(docs), 1, "L'insertion du document factice a échoué")
+
+    def test_update_sample(self):
+        """Test de la mise à jour d'un document factice"""
+        update_documents(self.collection, {"Name": "TestUser_Temp"}, {"Status": "Updated"})
+        updated_doc = read_documents(self.collection, {"Name": "TestUser_Temp"})[0]
+        self.assertEqual(updated_doc.get("Status"), "Updated", "Le statut du document factice n'a pas été mis à jour")
+
+    def test_delete_sample(self):
+        """Test de la suppression d'un document factice"""
+        delete_documents(self.collection, {"Name": "TestUser_Temp"})
+        docs = read_documents(self.collection, {"Name": "TestUser_Temp"})
+        self.assertEqual(len(docs), 0, "Le document factice n'a pas été supprimé")
+
+    @classmethod
+    def tearDownClass(cls):
+        """Nettoyage des documents factices"""
+        delete_documents(cls.collection, {"Name": "TestUser_Temp"})
+        # Vérifier que le nombre total de documents reste inchangé
+        final_count = cls.collection.count_documents({})
+        assert final_count == cls.initial_count, "Le nombre total de documents a changé après les tests !"
+
+if __name__ == "__main__":
+    unittest.main()
+```
+
+
+➤ Étape 3 — Enregistrer, puis tester
+se placer :
+cd C:\Users\yeodr\Migration_donnees_medicales
+
+python -m unittest discover tests
+
+
+## Résultat attendu :
+
+..
+----------------------------------------------------------------------
+Ran 2 tests in X.XXXs
+OK
+
+➤ Étape 4 — Commit & Push
+git add .
+git commit -m "Ajout des tests unitaires du script de migration"
+git push origin feature/tests-unitaires
+
+## Branche : feature/authentification
+➤ Étape 1 — Retour à main et création
+git checkout main
+git pull origin main
+git checkout -b feature/authentification
+
+➤ Étape 2 — Créer le répertoire et le fichier
+mkdir MedicalMigration\auth
+notepad MedicalMigration\auth\auth_mongo.py
+
+
+Colle le script 
+
+```
+import os
+from pymongo import MongoClient
+import logging
+from dotenv import load_dotenv
+
+# === Charger les variables d'environnement depuis un fichier .env si présent ===
+load_dotenv()
+
+# === Logging ===
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+# === Récupération des credentials depuis variables d'environnement ===
+try:
+    ADMIN_USER = os.environ["MONGO_ADMIN_USER"]
+    ADMIN_PASS = os.environ["MONGO_ADMIN_PASS"]
+    MIGRATION_USER = os.environ["MONGO_MIGRATION_USER"]
+    MIGRATION_PASS = os.environ["MONGO_MIGRATION_PASS"]
+    READ_USER = os.environ["MONGO_READ_USER"]
+    READ_PASS = os.environ["MONGO_READ_PASS"]
+except KeyError as e:
+    logging.error(f"Variable d'environnement manquante : {e}")
+    exit(1)
+
+# === Connexion au serveur MongoDB avec admin pour pouvoir créer des utilisateurs ===
+client = MongoClient(f"mongodb://{ADMIN_USER}:{ADMIN_PASS}@localhost:27017/admin")
+
+def create_user_if_not_exists(db_name, username, password, roles):
+    db = client.get_database(db_name)
+    try:
+        existing_users = [user["user"] for user in db.command("usersInfo")["users"]]
+        if username in existing_users:
+            logging.info(f"Utilisateur '{username}' existe déjà dans la DB '{db_name}'.")
+            return
+        db.command(
+            "createUser",
+            username,
+            pwd=password,
+            roles=roles
+        )
+        logging.info(f"Utilisateur '{username}' créé avec succès dans la DB '{db_name}'.")
+    except Exception as e:
+        logging.warning(f"Erreur création utilisateur '{username}': {e}")
+
+if __name__ == "__main__":
+    # Créer les utilisateurs si nécessaire
+    create_user_if_not_exists("admin", ADMIN_USER, ADMIN_PASS, [{"role": "userAdminAnyDatabase", "db": "admin"}])
+    create_user_if_not_exists("MedicalMigration", MIGRATION_USER, MIGRATION_PASS, [{"role": "readWrite", "db": "MedicalMigration"}])
+    create_user_if_not_exists("MedicalMigration", READ_USER, READ_PASS, [{"role": "read", "db": "MedicalMigration"}])
+    logging.info("Vérification/création des utilisateurs terminée !")
+```
+
+
+>>Se connecte au serveur MongoDB local.
+
+Crée trois utilisateurs avec des rôles différents :
+
+admin_user → administrateur capable de gérer toutes les bases et utilisateurs.
+
+migration_user → peut lire et écrire dans la base MedicalMigration.
+
+read_user → peut seulement lire les données dans la base MedicalMigration.
+
+Utilise les mots de passe définis dans les variables d’environnement.
+
+Affiche des logs pour confirmer la création ou signaler un problème (ex : utilisateur déjà existant).
+
+
+## Variables d’environnement
+
+Assure-toi qu’elles sont bien définies dans le même terminal où tu exécutes le script :
+
+set MONGO_MIGRATION_USER=migration_user
+set MONGO_MIGRATION_PASS=MigrationPass!
+set MONGO_HOST=localhost
+set MONGO_PORT=27017
+set MONGO_DB=MedicalMigration
+set MONGO_COLL=patients
+
+
+Puis exécute ton script dans ce terminal :
+
+python mongo_migration.py
+
+➤ Étape 3 — Tester
+python MedicalMigration/auth/auth_mongo.py
+
+
+Puis dans mongosh :
+
+mongosh
+use admin
+db.system.users.find().pretty()
+
+
+pour se connecter avec les différents users :
+
+
+## Admin (admin_user)
+
+Accès complet pour gérer les utilisateurs et les bases :
+
+mongosh -u admin_user -p SuperSecret123 --authenticationDatabase admin
+
+
+-u : nom de l’utilisateur
+
+-p : mot de passe
+
+--authenticationDatabase : base utilisée pour authentification (ici admin)
+
+Une fois connecté, tu peux gérer les utilisateurs, créer des bases, etc.
+
+## Migration (migration_user)
+
+Accès en lecture/écriture sur la base MedicalMigration uniquement :
+
+mongosh -u migration_user -p MigrationPass! --authenticationDatabase MedicalMigration
+
+
+Peut insérer, mettre à jour et supprimer des documents dans MedicalMigration.
+
+Ne peut pas créer d’utilisateurs ni gérer d’autres bases.
+
+## Lecture seule (read_user)
+
+Accès limité en lecture seule sur la base MedicalMigration :
+
+mongosh -u read_user -p ReadOnly123 --authenticationDatabase MedicalMigration
+
+
+Peut seulement lire les documents (find()) dans la base MedicalMigration.
+
+Toute tentative d’insertion, mise à jour ou suppression sera refusée.
+
+
+
+## Résultat attendu :
+L’utilisateur admin_user est affiché.
+
+➤ Étape 4 — Commit & Push
+git add .
+git commit -m "Ajout de la gestion des utilisateurs MongoDB"
+git push origin feature/authentification
+
+## Branche : feature/analyse-donnees
+➤ Étape 1 — Créer la branche
+git checkout main
+git pull origin main
+git checkout -b feature/analyse-donnees
+
+➤ Étape 2 — Créer le script d’analyse
+mkdir MedicalMigration\scripts
+notepad MedicalMigration\scripts\data_cleaning.py
+
+
+Colle le script 
+
+
+```
+import pandas as pd
+import logging
+import os
+
+logging.basicConfig(level=logging.INFO)
+
+def analyze_dataset(file_path):
+    # Lecture du CSV
+    df = pd.read_csv(file_path)
+    
+    # Nombre de lignes et colonnes
+    total_rows = len(df)
+    total_columns = len(df.columns)
+    column_names = list(df.columns)
+    
+    # Nombre de doublons
+    duplicate_rows = df.duplicated().sum()
+    
+    logging.info(f"Nombre total de lignes : {total_rows}")
+    logging.info(f"Nombre total de colonnes : {total_columns}")
+    logging.info(f"Colonnes : {column_names}")
+    logging.info(f"Nombre de doublons : {duplicate_rows}")
+    
+    # Optionnel : aperçu des doublons
+    if duplicate_rows > 0:
+        logging.info(f"Exemple de doublons :\n{df[df.duplicated()].head()}")
+
+if __name__ == "__main__":
+    # Chemin absolu du CSV, indépendant du dossier courant
+    base_dir = os.path.dirname(__file__)  # répertoire du script
+    csv_path = os.path.abspath(os.path.join(base_dir, "..", "dataset", "healthcare_dataset.csv"))
+
+    analyze_dataset(csv_path)
+
+```
+
+
+
+➤ Étape 3 — Tester
+python MedicalMigration/scripts/data_cleaning.py
+
+
+# Résultat attendu :
+
+INFO - Lignes avant nettoyage : 55500
+INFO - Lignes après nettoyage : 55492
+## Données nettoyées enregistrées dans healthcare_dataset_cleaned.csv
+
+➤ Étape 4 — Commit & Push
+git add .
+git commit -m "Ajout du script de nettoyage et analyse des données"
+git push origin feature/analyse-donnees
+
+## Branche : feature/configuration-docker
+➤ Étape 1 — Créer la branche
+git checkout main
+git pull origin main
+git checkout -b feature/configuration-docker
+
+➤ Étape 2 — Créer la structure Docker
+mkdir docker
+cd docker
+notepad Dockerfile
+
+
+## Contenu du Dockerfile :
+
+```
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Installer les dépendances système
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY MedicalMigration/scripts/ ./scripts/
+COPY MedicalMigration/dataset/ ./dataset/
+COPY MedicalMigration/requirements.txt ./requirements.txt
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+CMD ["python", "scripts/mongo_migration.py"]
+
+
+Ensuite :
+
+notepad docker-compose.yml
+
+```
+
+## Contenu du docker-compose.yml :
+
+
+```
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo_medical
+    ports:
+      - "27018:27017"  # accès MongoDB depuis l'hôte
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ADMIN_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ADMIN_PASS}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
+
+      # Utilisateurs supplémentaires pour init-mongo.js
+      MONGO_MIGRATION_USER: ${MONGO_MIGRATION_USER}
+      MONGO_MIGRATION_PASS: ${MONGO_MIGRATION_PASS}
+      MONGO_READ_USER: ${MONGO_READ_USER}
+      MONGO_READ_PASS: ${MONGO_READ_PASS}
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - mongo_data:/data/db
+    networks:
+      - medical_net
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({ ping: 1 })' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  migration:
+    build:
+      context: ..                    # dossier parent
+      dockerfile: docker/Dockerfile
+    env_file:
+      - .env                         # récupération des variables depuis le fichier .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ../MedicalMigration/dataset:/app/dataset
+      - ../MedicalMigration/scripts:/app/scripts
+    environment:
+      MONGO_DOCKER_HOST: mongo_medical
+      MONGO_DOCKER_PORT: 27017
+      CSV_PATH: /app/dataset/healthcare_dataset.csv
+    networks:
+      - medical_net
+    command: python /app/scripts/mongo_migration.py
+
+volumes:
+  mongo_data:
+
+networks:
+  medical_net:
+    driver: bridge
+
+```
+
+
+➤ Étape 3 — Tester Docker
+cd docker
+docker-compose up --build
+
+ou : docker build -t mongo_migration_image .
+
+
+
+
+## Résultat attendu :
+
+Le conteneur medical_mongo démarre
+
+Le conteneur migration_script affiche
+Migration terminée avec succès !
+
+➤ Étape 4 — Commit & Push
+git add .
+git commit -m "Ajout de la configuration Docker pour MongoDB et le script de migration"
+git push origin feature/configuration-docker
+
+## FUSIONNER LES BRANCHES DANS MAIN (APRÈS TESTS VALIDÉS)
+git checkout main
+git pull origin main
+git merge feature/tests-unitaires
+git merge feature/authentification
+git merge feature/analyse-donnees
+git merge feature/configuration-docker
+git push origin main
+
+
+>>pour supprimer le dossier et fichier
+
+## Avec PowerShell
+Remove-Item -Recurse -Force .\tests
+
+
+-Recurse : supprime tout le contenu du dossier (sous-dossiers et fichiers).
+
+-Force : supprime même les fichiers en lecture seule.
+
+## Avec l’invite de commandes (cmd)
+rmdir /s /q tests
+
+
+/s : supprime tous les fichiers et sous-dossiers.
+
+/q : mode silencieux (pas de confirmation).
+
+Après suppression, tu peux vérifier :
+
+ls
+
+
+ou
+
+dir
+
+
+Le dossier tests ne doit plus apparaître.
+
+mongosh -u migration_user -p MigrationPass! --authenticationDatabase MedicalMigration
+mongosh -u read_user -p readonly123 --authenticationDatabase MedicalMigration
+
+mongosh -u admin_user -p 'securePass123' --authenticationDatabase admin
+
+
+## Préparer les variables d’environnement
+
+Tu as déjà ton fichier .env :
+
+MONGO_ADMIN_USER=admin_user
+MONGO_ADMIN_PASS=securePass123
+MONGO_MIGRATION_USER=migration_user
+MONGO_MIGRATION_PASS=migrationPass!
+MONGO_READ_USER=read_user
+MONGO_READ_PASS=readonly123
+
+
+Tu dois t’assurer qu’il est chargé dans ton environnement avant d’ouvrir MongoDB Compass.
+Sous Windows, tu peux faire dans le terminal (PowerShell) :
+
+setx MONGO_ADMIN_USER "admin_user"
+setx MONGO_ADMIN_PASS "securePass123"
+setx MONGO_MIGRATION_USER "migration_user"
+setx MONGO_MIGRATION_PASS "migrationPass!"
+setx MONGO_READ_USER "read_user"
+setx MONGO_READ_PASS "readonly123"
+
+
+Cela définit les variables pour ton utilisateur. Tu devras redémarrer MongoDB Compass pour qu’il les reconnaisse.
+
+## Configurer la connexion dans MongoDB Compass
+
+Ouvre MongoDB Compass → New Connection.
+
+Dans Hostname, mets : localhost
+
+Dans Port, mets : 27017
+
+Sous Authentication, choisis Username / Password.
+
+Dans Username, mets : migration_user (ou autre user selon le rôle voulu)
+
+Dans Password, mets : %MONGO_MIGRATION_PASS% si Compass supporte les variables d’environnement, sinon copie le mot de passe directement (c’est le point faible de Compass, il ne lit pas toujours les .env).
+
+Dans Authentication Database, mets : MedicalMigration (ou admin pour admin_user).
+
+Si Compass ne supporte pas les variables d’environnement dans les champs, tu devras saisir le mot de passe directement. L’avantage reste que dans les scripts Python, tu n’as plus de mots de passe en dur, seulement dans le .env.
+
+
+## Depuis Docker Desktop (interface graphique)
+
+Tu peux ouvrir un terminal MongoDB directement depuis Docker Desktop :
+
+Ouvre Docker Desktop
+
+Va dans l’onglet Containers
+
+Clique sur ton conteneur mongo_medical
+
+Clique sur "Open in terminal" ou "Exec" (selon la version)
+
+## Cela ouvre un shell à l’intérieur du conteneur (équivalent à docker exec -it mongo_medical bash)
+
+Une fois dans le terminal, tape :
+
+mongosh -u migration_user -p 'migrationPass!' --authenticationDatabase medical_db
+
+
+## Automatiser le processus 
+## CI : Continuous Integration (Intégration continue)
+
+Objectif : automatiser l’intégration du code des développeurs dans un dépôt partagé.
+
+Fonctionnement :
+
+Chaque fois qu’un développeur pousse du code (commit) dans le dépôt, une série de tests et de vérifications est exécutée automatiquement.
+
+On détecte rapidement les bugs ou conflits.
+
+Avantages :
+
+Réduction des erreurs de fusion.
+
+Détection rapide des problèmes.
+
+Code toujours dans un état fonctionnel.
+
+Exemple d’outils : GitHub Actions, GitLab CI, Jenkins, CircleCI.
+
+## CD : Continuous Delivery / Continuous Deployment (Livraison/Déploiement continu)
+
+Continuous Delivery :
+
+Le code validé par la CI peut être livré automatiquement dans un environnement de pré-production.
+
+Le déploiement en production reste manuel, mais il est prêt à tout moment.
+
+Continuous Deployment :
+
+Le code validé par la CI est automatiquement déployé en production sans intervention humaine.
+
+Exemple d’outils : Jenkins, GitHub Actions, GitLab CI/CD, AWS CodePipeline.
+
+## En résumé :
+
+Mettre en place un CI/CD, c’est créer un pipeline automatisé qui :
+
+Intègre le code automatiquement (CI)
+
+Teste, construit et déploie automatiquement (CD)
+
+## Résultat : plus de rapidité, moins d’erreurs, production plus fiable.
+
+## création des dossiers et du fichier : .github\workflows et le fichier : ci_cd.yml
+## création de ces dossiers : C:\tools\act
+## téléchargé de : act_Windows_x86_64.zip et il faut le dézibé ici : C:\tools\act
+## contenu du fichier : 
+
+```
+name: CI - Tests unitaires
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Tests unitaires
+    runs-on: ubuntu-latest
+    container: python:3.11-slim
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installation des dépendances Python
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Exécution des tests unitaires
+        working-directory: /github/workspace/MedicalMigration
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
+
+```
+
+
+Étapes principales :
+
+## Récupérer le code
+
+uses: actions/checkout@v4
+
+
+GitHub copie ton projet sur un ordinateur virtuel temporaire.
+
+## Installer Python et les dépendances
+
+pip install -r requirements.txt
+
+
+Installe tous les modules Python dont ton projet a besoin (pandas, pymongo, etc.).
+
+## Lancer les tests automatiques
+
+python -m unittest discover -s tests -p "test_*.py" -v
+
+
+Cherche tous les fichiers de test dans le dossier tests.
+
+Vérifie que ton code fonctionne correctement.
+
+Affiche quels tests passent et lesquels échouent.
+
+Pourquoi c’est utile ?
+
+Automatique : tu n’as pas besoin de lancer les tests manuellement.
+
+Fiable : si un test échoue, GitHub te le dit immédiatement.
+
+Sûr : tu sais que ton code ne va pas casser l’application avant de le déployer.
 
 
 
