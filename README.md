@@ -2246,6 +2246,69 @@ Une fois dans le terminal, tape :
 mongosh -u migration_user -p 'migrationPass!' --authenticationDatabase medical_db
 
 
+## réalisation de test 
+
+## Test unitaire 
+
+## test_collection_non_vide
+•	But : Vérifier que la collection patients n’est pas vide après la migration.
+•	Comment :
+count = self.collection.count_documents({})
+self.assertGreater(count, 0)
+•	Ce que ça teste : Il y a au moins un document dans la collection.
+
+## test_champs_principaux_present
+•	But : Vérifier que tous les champs principaux attendus sont présents dans un document.
+•	Comment :
+expected_fields = ["Name", "Age", "Gender", ... , "Test Results"]
+doc = self.collection.find_one()
+for field in expected_fields:
+    self.assertIn(field, doc)
+•	Ce que ça teste : Chaque document contient bien les champs critiques comme Name, Age, Gender, Blood Type, etc.
+
+## test_types_champs
+•	But : Vérifier le type de certaines colonnes importantes.
+•	Comment :
+self.assertIsInstance(doc["Age"], int)
+self.assertIsInstance(doc["Billing Amount"], (int, float))
+self.assertIsInstance(doc["Name"], str)
+self.assertIsInstance(doc["Date of Admission"], str)
+•	Ce que ça teste : Les types de données sont corrects (Age entier, Billing Amount numérique, Name et Date of Admission chaînes de caractères).
+
+## test_indexes_existants
+•	But : Vérifier que des index importants existent pour optimiser les requêtes.
+•	Comment :
+indexes = self.collection.index_information()
+self.assertIn("Name_1", indexes)
+self.assertIn("Date of Admission_1", indexes)
+•	Ce que ça teste : Les index sur les champs Name et Date of Admission ont bien été créés.
+
+## test_echantillon_donnees
+•	But : Vérifier certaines valeurs plausibles sur un échantillon de documents.
+•	Comment :
+doc = self.collection.find_one({"Age": {"$gte": 0}})
+self.assertIsNotNone(doc)
+self.assertIn(doc["Gender"], ["Male", "Female"])
+•	Ce que ça teste :
+o	Il y a au moins un patient avec un âge ≥ 0.
+o	La valeur du genre est correcte (Male ou Female).
+
+## Résumé global :
+Ces tests couvrent les points essentiels d’une migration vers MongoDB :
+1.	La collection n’est pas vide.
+2.	Tous les champs attendus sont présents.
+3.	Les types des champs sont corrects.
+4.	Les index essentiels existent.
+5.	Les données sont plausibles sur un échantillon.
+
+
+Pour l’authentification 
+•	Après exécution du script :
+o	Un utilisateur MongoDB admin_user est créé dans la base admin.
+o	Il peut gérer les utilisateurs et les rôles dans toutes les bases.
+•	Tu devras ensuite te connecter avec ce nom d’utilisateur et ce mot de passe si l’authentification est activée.
+
+
 ## Automatiser le processus 
 ## CI : Continuous Integration (Intégration continue)
 
