@@ -1610,9 +1610,9 @@ db.patients.countDocuments()
 **Conteneurisation complète prête pour un déploiement futur sur AWS.**
 
 
-### Gestion et modification des branches 
+# Gestion et modification des branches 
 
-# Créaion des autres branches, script et test
+### Création des autres branches, script et test
 
 PROCÉDURE COMPLÈTE — MIGRATION MÉDICALE (branche par branche)
 
