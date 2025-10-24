@@ -142,7 +142,8 @@ Le déploiement repose sur deux conteneurs :
 ## Étape 0 : création de branche pour la bonne gestion du projet dans git(github)
 
 ## Création des autres branches, script et test (prioriser de travailler sur les autres branche avant de fusionner les modifications ou le travail sur la branche principale(main) (dans mon cas les autres branches ont été crées après et les modifications reportées sur la branche main(maître), mais le projet avait été deployé sur la branche main)
-\033[32m
+
+
 ```
                              ┌──────────────────────────────────┐
                              │         MAIN (branche stable)    │
@@ -184,7 +185,6 @@ Le déploiement repose sur deux conteneurs :
 │  - python scripts/data_cleaning  │  │  - docker-compose up --build     │
 │  - git push origin feature/...   │  │  - test conteneur Mongo actif    │
 └──────────────────────────────────┘  └──────────────────────────────────┘
-\033[0m
 ```
  branche principal(maître) :main : branche existant 
 feature/tests-unitaires
