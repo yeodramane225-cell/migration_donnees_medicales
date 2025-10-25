@@ -1,31 +1,54 @@
-version: '3.8'
-
 services:
   mongo:
     image: mongo:latest
-    container_name: medical_mongo
+    container_name: mongo_medical
     ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db          # Volume pour persistance MongoDB
-    restart: always
-
-  python_migration:
-    build:
-      context: ../MedicalMigration     # Chemin vers ton Dockerfile et scripts
-    container_name: migration_script
-    depends_on:
-      - mongo
-    volumes:
-      - ../MedicalMigration/dataset:/app/dataset   # Volume pour le CSV
+      - "27018:27017"  # accès MongoDB depuis l'hôte
     environment:
-      - MONGO_HOST=mongo             # Nom du service Mongo pour Docker
-      - MONGO_PORT=27017
-      - MONGO_DB=medical_db
-      - MONGO_COLL=patients
-      - CSV_PATH=/app/dataset/healthcare_dataset.csv
-    command: ["python", "scripts/migrate_to_mongo.py"]
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ADMIN_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ADMIN_PASS}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
+
+      # Utilisateurs supplémentaires pour init-mongo.js
+      MONGO_MIGRATION_USER: ${MONGO_MIGRATION_USER}
+      MONGO_MIGRATION_PASS: ${MONGO_MIGRATION_PASS}
+      MONGO_READ_USER: ${MONGO_READ_USER}
+      MONGO_READ_PASS: ${MONGO_READ_PASS}
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - mongo_data:/data/db
+    networks:
+      - medical_net
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({ ping: 1 })' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  migration:
+    build:
+      context: ..                    # dossier parent
+      dockerfile: docker/Dockerfile
+    env_file:
+      - .env                         # récupération des variables depuis le fichier .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ../MedicalMigration/dataset:/app/dataset
+      - ../MedicalMigration/scripts:/app/scripts
+    environment:
+      MONGO_DOCKER_HOST: mongo_medical
+      MONGO_DOCKER_PORT: 27017
+      CSV_PATH: /app/dataset/healthcare_dataset.csv
+    networks:
+      - medical_net
+    command: python /app/scripts/mongo_migration.py
 
 volumes:
-  mongo_data: {}
+  mongo_data:
 
+networks:
+  medical_net:
+    driver: bridge

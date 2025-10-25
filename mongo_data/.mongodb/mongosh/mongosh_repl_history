@@ -1,0 +1,8 @@
+exit
+db.patients.find().limit(5).pretty()
+db.patients.countDocuments()
+show collections
+use MedicalMigration
+exit
+db.createUser({ user: "read_user", pwd: "readonly123", roles: [{ role: "read", db: "MedicalMigration" }] })er",
+use MedicalMigration
