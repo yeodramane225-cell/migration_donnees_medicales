@@ -7,3 +7,6 @@ __pycache__/
 
 # Ignorer les secrets
 .env
+
+# Ignorer mongo_data (eviter que les données soient publique et exposées)
+mongo_data/
