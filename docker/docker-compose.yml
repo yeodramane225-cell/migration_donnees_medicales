@@ -3,20 +3,13 @@ services:
     image: mongo:latest
     container_name: mongo_medical
     ports:
-      - "27018:27017"  # accès MongoDB depuis l'hôte
+      - "27018:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ADMIN_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ADMIN_PASS}
       MONGO_INITDB_DATABASE: ${MONGO_DB}
-
-      # Utilisateurs supplémentaires pour init-mongo.js
-      MONGO_MIGRATION_USER: ${MONGO_MIGRATION_USER}
-      MONGO_MIGRATION_PASS: ${MONGO_MIGRATION_PASS}
-      MONGO_READ_USER: ${MONGO_READ_USER}
-      MONGO_READ_PASS: ${MONGO_READ_PASS}
     volumes:
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-      - mongo_data:/data/db
+      - /c/Users/yeodr/Migration_donnees_medicales/docker/init-scripts:/docker-entrypoint-initdb.d
     networks:
       - medical_net
     healthcheck:
@@ -28,16 +21,16 @@ services:
 
   migration:
     build:
-      context: ..                    # dossier parent
+      context: /c/Users/yeodr/Migration_donnees_medicales
       dockerfile: docker/Dockerfile
     env_file:
-      - .env                         # récupération des variables depuis le fichier .env
+      - ../.env        # ou .env si tu le mets dans docker/
     depends_on:
       mongo:
         condition: service_healthy
     volumes:
-      - ../MedicalMigration/dataset:/app/dataset
-      - ../MedicalMigration/scripts:/app/scripts
+      - /c/Users/yeodr/Migration_donnees_medicales/MedicalMigration/dataset:/app/dataset
+      - /c/Users/yeodr/Migration_donnees_medicales/MedicalMigration/scripts:/app/scripts
     environment:
       MONGO_DOCKER_HOST: mongo_medical
       MONGO_DOCKER_PORT: 27017

@@ -1,32 +1,27 @@
-// Sécuriser l'accès aux variables d'environnement
-function requireEnv(varName) {
-  const value = process.env[varName];
-  if (!value) {
-    throw new Error(`La variable d'environnement ${varName} n'est pas définie !`);
-  }
-  return value;
-}
+// --- Initialisation MongoDB dans Docker ---
 
 // --- Utilisateur root ---
 db = db.getSiblingDB("admin");
 db.createUser({
-  user: requireEnv("MONGO_ADMIN_USER"),
-  pwd: requireEnv("MONGO_ADMIN_PASS"),
+  user: process.env.MONGO_INITDB_ROOT_USERNAME,
+  pwd: process.env.MONGO_INITDB_ROOT_PASSWORD,
   roles: [{ role: "root", db: "admin" }]
 });
 
-// --- Utilisateur migration ---
-const dbName = requireEnv("MONGO_DB");
+// --- Base pour la migration ---
+const dbName = process.env.MONGO_INITDB_DATABASE;
 db = db.getSiblingDB(dbName);
+
+// --- Utilisateur migration ---
 db.createUser({
-  user: requireEnv("MONGO_MIGRATION_USER"),
-  pwd: requireEnv("MONGO_MIGRATION_PASS"),
+  user: process.env.MONGO_MIGRATION_USER,
+  pwd: process.env.MONGO_MIGRATION_PASS,
   roles: [{ role: "readWrite", db: dbName }]
 });
 
 // --- Utilisateur lecture seule ---
 db.createUser({
-  user: requireEnv("MONGO_READ_USER"),
-  pwd: requireEnv("MONGO_READ_PASS"),
+  user: process.env.MONGO_READ_USER,
+  pwd: process.env.MONGO_READ_PASS,
   roles: [{ role: "read", db: dbName }]
 });
